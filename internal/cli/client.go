@@ -11,6 +11,7 @@ import (
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/services/library"
 
 	xov2 "github.com/vatesfr/xenorchestra-go-sdk/v2"
+	v2client "github.com/vatesfr/xenorchestra-go-sdk/v2/client"
 
 	xoconfig "github.com/littlejo/xo-gocli/internal/config"
 )
@@ -55,6 +56,28 @@ func NewClient(cmd *cobra.Command, cfg *xoconfig.ClientConfig) (library.Library,
 	}
 
 	client, err := xov2.New(sdkConfig)
+	if err != nil {
+		return nil, newConnectionError(cfg, err)
+	}
+	return client, nil
+}
+
+// NewHTTPClient builds the authenticated SDK v2 REST client.
+//
+// The v2 client exposes its HttpClient, BaseURL and AuthToken specifically so
+// callers can talk to REST endpoints the SDK does not (yet) wrap with a typed
+// service. It is the same single API boundary as NewClient: authentication,
+// TLS and base URL handling all come from the SDK.
+//
+// Note: for resources the SDK already exposes, prefer NewClient and the typed
+// service; use this only for endpoints that are a known gap in the SDK (the
+// missing operation should be contributed upstream).
+func NewHTTPClient(cmd *cobra.Command, cfg *xoconfig.ClientConfig) (*v2client.Client, error) {
+	sdkConfig, err := buildSDKConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	client, err := v2client.New(sdkConfig)
 	if err != nil {
 		return nil, newConnectionError(cfg, err)
 	}
