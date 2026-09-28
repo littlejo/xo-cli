@@ -1,18 +1,78 @@
 name: Release
 
 on:
+  # A human pushes a tag: git tag vX.Y.Z && git push origin vX.Y.Z
+  #
+  # NOTE: tags pushed by GITHUB_TOKEN (e.g. by the Version workflow) do NOT
+  # trigger this - GitHub does not run workflows for ref events caused by
+  # GITHUB_TOKEN. Automation therefore goes through the workflow_dispatch
+  # below, which the Version workflow triggers once it pushes a tag.
   push:
     tags:
       - 'v*.*.*'
+  # Triggered automatically by the Version workflow, and manually from the
+  # Actions tab (pick a tag, or leave it empty to release the latest tag).
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (defaults to the latest v*.*.* tag)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
 
+# Avoid building the same release twice at the same time.
+concurrency:
+  group: release-${{ github.ref }}-${{ inputs.tag }}
+  cancel-in-progress: false
+
 jobs:
+  # Works out which tag to release, whichever trigger fired, and exposes the
+  # tag and its ref so the other jobs always build the exact same commit.
+  resolve:
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+      ref: ${{ steps.resolve.outputs.ref }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Resolve the tag to release
+        id: resolve
+        run: |
+          set -euo pipefail
+          EVENT="${{ github.event_name }}"
+          INPUT_TAG="${{ inputs.tag }}"
+          if [ "$EVENT" = "push" ]; then
+            TAG="${GITHUB_REF_NAME}"
+          elif [ -n "$INPUT_TAG" ]; then
+            case "$INPUT_TAG" in
+              v*) TAG="$INPUT_TAG" ;;
+              *)  TAG="v$INPUT_TAG" ;;
+            esac
+          else
+            TAG="$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1 || true)"
+            [ -n "$TAG" ] || { echo "::error::no v*.*.* tag found to release"; exit 1; }
+          fi
+          echo "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$' \
+            || { echo "::error::$TAG is not a strict vMAJOR.MINOR.PATCH tag"; exit 1; }
+          git rev-parse -q --verify "refs/tags/$TAG" >/dev/null \
+            || { echo "::error::tag $TAG does not exist in this repository"; exit 1; }
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "ref=refs/tags/$TAG" >> "$GITHUB_OUTPUT"
+          echo "Releasing ${TAG}"
+
   test:
     runs-on: ubuntu-latest
+    needs: resolve
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.resolve.outputs.ref }}
+          fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
           go-version: '1.27.1'
@@ -25,10 +85,11 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    needs: test
+    needs: [resolve, test]
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.resolve.outputs.ref }}
           fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
@@ -40,3 +101,4 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TAG: ${{ needs.resolve.outputs.tag }}

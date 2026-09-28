@@ -53,4 +53,22 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git tag -a "$VERSION" -m "release: ${VERSION}"
           git push origin "refs/tags/${VERSION}"
-          echo "Pushed ${VERSION} - the Release workflow will now build and publish it"
+          echo "Pushed ${VERSION}"
+
+      # Pushing a tag with GITHUB_TOKEN does NOT trigger the Release workflow
+      # (GitHub suppresses workflow runs for ref events caused by
+      # GITHUB_TOKEN), so dispatch it explicitly to build and publish.
+      - name: Trigger the Release workflow
+        if: steps.bump.outputs.version != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.bump.outputs.version }}"
+          curl -fsSL \
+            -X POST \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/release.yml/dispatches" \
+            -d "{\"ref\":\"main\",\"inputs\":{\"tag\":\"${VERSION}\"}}"
+          echo "Triggered Release workflow for ${VERSION}"

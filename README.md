@@ -225,9 +225,18 @@ as passed.
 
 - **CI** (`.github/workflows/ci.yml`): runs on push to `main` and on every PR —
   `gofmt`, `go vet`, `golangci-lint`, unit + integration tests, build.
-- **Release** (`.github/workflows/release.yml`): triggered by a `v*.*.*` tag,
-  builds cross-platform binaries with [GoReleaser](https://goreleaser.com) and
-  publishes them as a draft GitHub release.
+- **Version** (`.github/workflows/version.yml`): on every push to `main`,
+  computes the next semver tag from the conventional-commits history
+  (`feat` → minor, anything else → patch), pushes it, and triggers the
+  Release workflow.
+- **Release** (`.github/workflows/release.yml`): for a `v*.*.*` tag, runs the
+  test suite, then builds cross-platform binaries with
+  [GoReleaser](https://goreleaser.com) and publishes them as a draft GitHub
+  release. It can also be run manually from the Actions tab (optionally
+  targeting a specific tag).
+
+Normal flow: push to `main` — the tag and the release are created
+automatically. To release a specific commit by hand:
 
 ```sh
 git tag v1.0.0 && git push origin v1.0.0
