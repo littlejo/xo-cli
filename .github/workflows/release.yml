@@ -73,7 +73,7 @@ jobs:
         with:
           ref: ${{ needs.resolve.outputs.ref }}
           fetch-depth: 0
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.1'
       - name: Check formatting
@@ -91,7 +91,7 @@ jobs:
         with:
           ref: ${{ needs.resolve.outputs.ref }}
           fetch-depth: 0
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.27.1'
       - name: Run GoReleaser
