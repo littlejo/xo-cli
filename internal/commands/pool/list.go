@@ -1,0 +1,112 @@
+package pool
+
+import (
+	"fmt"
+	"io"
+
+	"github.com/spf13/cobra"
+
+	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
+
+	"github.com/vatesfr/xo-cli/internal/cli"
+	"github.com/vatesfr/xo-cli/internal/config"
+	"github.com/vatesfr/xo-cli/internal/output"
+)
+
+const (
+	flagQuery = "query"
+	flagLimit = "limit"
+)
+
+func newListCommand() *cobra.Command {
+	var (
+		query string
+		limit int
+	)
+
+	cmd := &cobra.Command{
+		Use:   "list",
+		Short: "List pools",
+		Long: `List XenServer pools from Xen Orchestra.
+
+Examples:
+  xo pool list
+  xo pool list --output json
+  xo pool list --query '[].name_label'
+  xo pool list --limit 10`,
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			format, err := output.ParseFormat(cli.OutputFormat(cmd))
+			if err != nil {
+				return err
+			}
+			if limit < 0 {
+				return fmt.Errorf("--limit must be greater than or equal to 0")
+			}
+			if err := output.ValidateQuery(query); err != nil {
+				return err
+			}
+
+			cfg, err := config.Load(cli.ProfileName(cmd))
+			if err != nil {
+				return err
+			}
+
+			xo, cancel, err := cli.NewClient(cmd.Context(), cmd, cfg)
+			if err != nil {
+				return err
+			}
+			defer cancel()
+
+			pools, err := xo.Pool().GetAll(cmd.Context(), limit, "")
+			if err != nil {
+				return cli.InsecureHint(fmt.Sprintf("cannot list pools: %v", err), cfg.Insecure)
+			}
+
+			return renderPools(cmd.OutOrStdout(), format, pools, query)
+		},
+	}
+
+	flags := cmd.Flags()
+	flags.StringVar(&query, flagQuery, "", "JMESPath expression applied to the result, e.g. '[].name_label'")
+	flags.IntVar(&limit, flagLimit, 0, "maximum number of pools to return (0 for no limit)")
+
+	return cmd
+}
+
+// renderPools applies the optional --query expression and renders the result
+// in the requested format.
+func renderPools(w io.Writer, format output.Format, pools []*payloads.Pool, query string) error {
+	queryResult, err := output.Query(query, pools)
+	if err != nil {
+		return err
+	}
+
+	table := output.Table{
+		Headers: []string{"ID", "NAME", "PLATFORM", "CORES", "SOCKETS", "MASTER", "HA"},
+	}
+	for _, p := range pools {
+		table.Rows = append(table.Rows, []string{
+			p.ID.String(),
+			p.NameLabel,
+			p.PlatformVersion,
+			fmt.Sprintf("%d", p.CPUs.Cores),
+			fmt.Sprintf("%d", p.CPUs.Sockets),
+			p.Master.String(),
+			fmt.Sprintf("%t", p.HAEnabled),
+		})
+	}
+
+	// For structured formats without a query, normalize the SDK types so the
+	// output only contains the requested data.
+	var raw any = pools
+	if format != output.FormatTable && (queryResult == nil || !queryResult.Present) {
+		normalized, err := output.Normalize(pools)
+		if err != nil {
+			return err
+		}
+		raw = normalized
+	}
+
+	return output.Render(w, format, table, raw, queryResult)
+}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/vatesfr/xo-cli/internal/cli"
 	"github.com/vatesfr/xo-cli/internal/commands/configure"
+	"github.com/vatesfr/xo-cli/internal/commands/pool"
 	"github.com/vatesfr/xo-cli/internal/commands/sr"
 	"github.com/vatesfr/xo-cli/internal/commands/vm"
 )
@@ -27,6 +28,7 @@ Configure a profile first with 'xo configure'.`,
 	root.PersistentFlags().String(cli.FlagOutput, "table", "output format: table, json, yaml, text")
 
 	root.AddCommand(configure.NewCommand())
+	root.AddCommand(pool.NewCommand())
 	root.AddCommand(sr.NewCommand())
 	root.AddCommand(vm.NewCommand())
 
