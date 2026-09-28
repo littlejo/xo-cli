@@ -1,0 +1,234 @@
+# xo-cli
+
+A modern command line client for [Xen Orchestra](https://github.com/vates/xen-orchestra),
+written in Go with an AWS-CLI-like experience.
+
+`xo` is a thin UX layer over the official Go SDK
+([`github.com/vatesfr/xenorchestra-go-sdk/v2`](https://github.com/vatesfr/xenorchestra-go-sdk)).
+It talks to the Xen Orchestra **REST API** only — there is no second HTTP client
+and no legacy JSON-RPC (v1) code path.
+
+```text
+   xo CLI (commands / output / query / config)
+        │
+        ▼
+   xenorchestra-go-sdk/v2          ← the only Xen Orchestra client
+        │
+        ▼
+   Xen Orchestra REST API
+```
+
+## Features
+
+- Resource-oriented commands (`xo vm list`, `xo sr list`, `xo pool list`, …)
+- Multiple connection profiles, AWS-style (`--profile`, `$XO_PROFILE`)
+- Human-friendly default output plus `--output json|yaml|text` for scripting
+- AWS-CLI-like `--query` using [JMESPath](https://jmespath.org/)
+- `--insecure` escape hatch for self-signed / internal certificates
+- Static, dependency-free binaries (releases are built for the common 64-bit platforms)
+
+## Installation
+
+### From a release
+
+Download the archive for your platform from the **Releases** page of this
+repository and drop the `xo` binary on your `PATH`.
+
+### From source
+
+Requires Go 1.26+ (a [mise](https://mise.jdx.dev/) config is included).
+
+```sh
+go build -o dist/xo ./cmd/xo
+```
+
+or, with mise:
+
+```sh
+mise install
+mise run build      # -> dist/xo
+```
+
+## Quick start
+
+```sh
+# 1. Store a profile (interactive, or via flags)
+xo configure --profile lab \
+  --endpoint https://xo.example.com \
+  --token <token>
+
+# 2. List VMs
+xo vm list --profile lab
+
+# 3. Get machine-readable output
+xo vm list --profile lab --output json | jq '.[].name_label'
+
+# 4. Filter with a JMESPath query
+xo vm list --profile lab --query '[?power_state==`Running`].name_label'
+```
+
+You can also select the profile with an environment variable:
+
+```sh
+export XO_PROFILE=lab
+xo vm list
+```
+
+## Configuration
+
+Profiles are stored in `~/.config/xo/config` (override the location with
+`$XO_CONFIG_FILE`). The file is written with `0600` permissions because it may
+hold credentials.
+
+```yaml
+current: lab
+profiles:
+  - name: lab
+    endpoint: https://xo.example.com
+    token: <token>
+    # OR: username: admin / password: <secret>
+    # OR: insecure: true
+```
+
+### `xo configure`
+
+```sh
+xo configure                                   # interactive, default profile
+xo configure --profile lab                     # interactive, named profile
+xo configure --profile lab --endpoint https://xo.example.com --token <token>
+xo configure --profile lab --username admin --password <secret>
+xo configure --profile lab --insecure          # skip TLS verification
+```
+
+### Environment variables
+
+Environment variables always take precedence over the stored profile:
+
+| Variable       | Purpose                                   |
+| -------------- | ----------------------------------------- |
+| `XO_PROFILE`   | Select the active profile                 |
+| `XO_ENDPOINT`  | Xen Orchestra base URL                    |
+| `XO_TOKEN`     | Authentication token                      |
+| `XO_USERNAME`  | Username (alternative to a token)         |
+| `XO_PASSWORD`  | Password (alternative to a token)         |
+| `XO_INSECURE`  | Skip TLS certificate verification         |
+| `XO_CONFIG_FILE` | Location of the configuration file     |
+
+Either a token, or a username + password, must be available to authenticate.
+
+### Insecure mode
+
+For self-signed or internally-issued certificates:
+
+```sh
+xo configure --profile lab --insecure          # stored in the profile
+XO_INSECURE=1 xo vm list                        # per invocation
+```
+
+This disables certificate verification and is only appropriate for internal,
+trusted networks.
+
+## Commands
+
+### Global flags
+
+| Flag            | Description                                             |
+| --------------- | ------------------------------------------------------- |
+| `--profile`     | Configuration profile to use (or `$XO_PROFILE`)         |
+| `--output`      | Output format: `table` (default), `json`, `yaml`, `text`|
+
+### `xo vm`
+
+```sh
+xo vm list                          # all VMs
+xo vm list --output json            # machine readable
+xo vm list --power-state Running    # filter by power state
+xo vm list --limit 10               # cap the number of results
+xo vm list --query '[].name_label'  # project a single field
+```
+
+### `xo sr`
+
+```sh
+xo sr list
+xo sr list --type lvm               # filter by SR type (lvm, nfs, ext, iso, …)
+xo sr list --query '[?SR_type==`nfs`].name_label'
+```
+
+### `xo pool`
+
+```sh
+xo pool list
+xo pool list --query '[?HA_enabled].name_label'
+```
+
+More resources and sub-commands (`get`, `start`, `stop`, …) are added on top of
+the SDK as it evolves. See `xo <resource> --help` for the current surface.
+
+## Output & querying
+
+The pipeline is always: **SDK response → structured data → query → formatter**.
+Queries operate on the structured data, never on rendered tables.
+
+```sh
+xo vm list --output json                      # full objects as JSON
+xo vm list --query '[].name_label'            # one value per line
+xo vm list --query '[?power_state==`Running`].name_label'
+xo vm list --query 'length(@)'                # count
+```
+
+Backtick literals (`` `Running` ``) work as in the AWS CLI even though the
+underlying JMESPath engine uses single quotes.
+
+## Development
+
+The repo is set up for AI-assisted and local development. See [AGENTS.md](AGENTS.md)
+for the architecture rules and conventions.
+
+```sh
+mise install          # install the pinned Go toolchain
+mise run build        # go build -o dist/xo ./cmd/xo
+mise run test         # go test ./...
+mise run lint         # go vet ./... + gofmt check
+```
+
+### Testing
+
+Unit tests run without a Xen Orchestra instance (they use `httptest` servers and
+fixtures). Integration tests are opt-in and only run when explicitly enabled:
+
+```sh
+export XO_TEST_URL=https://xo.example.com
+export XO_TEST_TOKEN=<token>
+go test -tags=integration ./...
+```
+
+Without those variables the integration tests are reported as **skipped**, never
+as passed.
+
+### CI / Release
+
+- **CI** (`.github/workflows/ci.yml`): runs on push to `main` and on every PR —
+  `gofmt`, `go vet`, `golangci-lint`, unit + integration tests, build.
+- **Release** (`.github/workflows/release.yml`): triggered by a `v*.*.*` tag,
+  builds cross-platform binaries with [GoReleaser](https://goreleaser.com) and
+  publishes them as a draft GitHub release.
+
+```sh
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+## Roadmap
+
+- [x] `xo configure` + profiles
+- [x] `xo vm list`
+- [x] `xo sr list`
+- [x] `xo pool list`
+- [ ] `xo host list`
+- [ ] `xo vm get / start / stop / reboot / snapshot`
+- [ ] `xo task list` (asynchronous operations)
+
+## License
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT),
+the same license as the Xen Orchestra Go SDK.
