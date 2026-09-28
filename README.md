@@ -206,6 +206,7 @@ xo pool list --query '[?HA_enabled].name_label'
 ```sh
 xo network list
 xo network list --query '[].name_label'
+xo network get <id>                 # one network (table/json/yaml)
 ```
 
 ### `xo task`
@@ -302,7 +303,7 @@ git tag v1.0.0 && git push origin v1.0.0
 - [x] `xo sr list`
 - [x] `xo pool list`
 - [x] `xo host list`
-- [x] `xo network list`
+- [x] `xo network list / get`
 - [x] `xo vm get / start / stop / reboot / snapshot`
 - [x] `xo template list / get`
 - [x] `xo task list / get` (asynchronous operations)
