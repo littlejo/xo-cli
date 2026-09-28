@@ -1,0 +1,6 @@
+# Build artifacts
+dist/
+/xo
+
+# Local configuration / credentials
+.env

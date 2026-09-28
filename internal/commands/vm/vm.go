@@ -1,0 +1,16 @@
+// Package vm implements the 'xo vm' command group.
+package vm
+
+import (
+	"github.com/spf13/cobra"
+)
+
+// NewCommand builds the 'xo vm' command group.
+func NewCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "vm",
+		Short: "Manage virtual machines",
+	}
+	cmd.AddCommand(newListCommand())
+	return cmd
+}

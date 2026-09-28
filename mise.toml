@@ -1,0 +1,17 @@
+[tools]
+go = "1.26.8"
+
+[tasks.build]
+description = "Build the xo binary into dist/"
+run = "go build -o dist/xo ./cmd/xo"
+
+[tasks.test]
+description = "Run the unit test suite"
+run = "go test ./..."
+
+[tasks.lint]
+description = "Run go vet and check formatting"
+run = """
+go vet ./... &&
+test -z "$(gofmt -l .)" && echo "gofmt: OK"
+"""
