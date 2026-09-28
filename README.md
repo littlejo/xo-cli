@@ -155,12 +155,28 @@ trusted networks.
 ### `xo vm`
 
 ```sh
+# Read
 xo vm list                          # all VMs
 xo vm list --output json            # machine readable
 xo vm list --power-state Running    # filter by power state
 xo vm list --limit 10               # cap the number of results
 xo vm list --query '[].name_label'  # project a single field
+xo vm get <id>                      # one VM (table/json/yaml)
+
+# Lifecycle (all return an async task id)
+xo vm start <id>                    # power on
+xo vm start <id> --host <host-id>   # pin to a host
+xo vm stop <id>                     # clean shutdown (asks to confirm)
+xo vm stop <id> --hard              # power off immediately
+xo vm stop <id> --yes               # skip confirmation (automation)
+xo vm reboot <id>                   # clean reboot
+xo vm reboot <id> --hard            # force a hard reboot
+xo vm snapshot <id>                 # take a snapshot
+xo vm snapshot <id> --name backup   # label the snapshot
 ```
+
+Destructive operations (`stop`) require confirmation; pass `--yes` to run
+non-interactively.
 
 ### `xo host`
 
@@ -257,7 +273,7 @@ git tag v1.0.0 && git push origin v1.0.0
 - [x] `xo sr list`
 - [x] `xo pool list`
 - [x] `xo host list`
-- [ ] `xo vm get / start / stop / reboot / snapshot`
+- [x] `xo vm get / start / stop / reboot / snapshot`
 - [ ] `xo task list` (asynchronous operations)
 
 ## License
