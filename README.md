@@ -207,6 +207,7 @@ xo pool list --query '[?HA_enabled].name_label'
 xo task list                        # all asynchronous tasks
 xo task list --status failure       # filter by status (pending, success, failure, interrupted)
 xo task list --query '[].id'
+xo task get <id>                    # one task (table/json/yaml)
 ```
 
 ### `xo template`
@@ -296,7 +297,7 @@ git tag v1.0.0 && git push origin v1.0.0
 - [x] `xo host list`
 - [x] `xo vm get / start / stop / reboot / snapshot`
 - [x] `xo template list / get`
-- [x] `xo task list` (asynchronous operations)
+- [x] `xo task list / get` (asynchronous operations)
 
 ## License
 

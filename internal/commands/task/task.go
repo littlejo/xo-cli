@@ -11,6 +11,7 @@ func NewCommand() *cobra.Command {
 		Use:   "task",
 		Short: "Manage asynchronous tasks",
 	}
+	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newListCommand())
 	return cmd
 }
