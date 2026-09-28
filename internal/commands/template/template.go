@@ -19,6 +19,7 @@ func NewCommand() *cobra.Command {
 		Use:   "template",
 		Short: "Manage VM templates",
 	}
+	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newListCommand())
 	return cmd
 }

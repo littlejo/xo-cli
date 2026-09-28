@@ -211,6 +211,7 @@ show them. `xo template list` reads that dedicated resource.
 xo template list
 xo template list --output json
 xo template list --query '[].name_label'
+xo template get <id>            # one template (table/json/yaml)
 ```
 
 More resources and sub-commands (`get`, `start`, `stop`, …) are added on top of
@@ -286,7 +287,7 @@ git tag v1.0.0 && git push origin v1.0.0
 - [x] `xo pool list`
 - [x] `xo host list`
 - [x] `xo vm get / start / stop / reboot / snapshot`
-- [x] `xo template list`
+- [x] `xo template list / get`
 - [ ] `xo task list` (asynchronous operations)
 
 ## License
