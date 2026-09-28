@@ -1,0 +1,44 @@
+version: 2
+
+project_name: xo
+
+builds:
+  - id: xo
+    main: ./cmd/xo
+    binary: xo
+    env:
+      - CGO_ENABLED=0
+    # 64-bit only: the Xen Orchestra SDK uses int constants that overflow on
+    # 32-bit (386/arm) targets, so those architectures do not compile.
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w
+      - -X github.com/vatesfr/xo-cli/internal/cli.Version={{.Version}}
+
+archives:
+  - id: xo
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^ci:'
+
+release:
+  # The GitHub repository is auto-detected from the git remote
+  # (github.com/<owner>/xo-cli), so owner/name are intentionally not set.
+  # Releases are created as drafts so a human reviews before publishing.
+  # Set to false to publish automatically.
+  draft: true
+  prerelease: auto
