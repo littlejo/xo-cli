@@ -12,6 +12,7 @@ import (
 	"github.com/littlejo/xo-gocli/internal/commands/sr"
 	"github.com/littlejo/xo-gocli/internal/commands/task"
 	"github.com/littlejo/xo-gocli/internal/commands/template"
+	"github.com/littlejo/xo-gocli/internal/commands/token"
 	"github.com/littlejo/xo-gocli/internal/commands/vm"
 )
 
@@ -38,6 +39,7 @@ Configure a profile first with 'xo configure'.`,
 	root.AddCommand(sr.NewCommand())
 	root.AddCommand(task.NewCommand())
 	root.AddCommand(template.NewCommand())
+	root.AddCommand(token.NewCommand())
 	root.AddCommand(vm.NewCommand())
 
 	return root
