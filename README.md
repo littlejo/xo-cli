@@ -22,7 +22,7 @@ and no legacy JSON-RPC (v1) code path.
 
 ```sh
 # 1. Install the binary
-curl -fsSL https://raw.githubusercontent.com/littlejo/xo-cli/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/littlejo/xo-gocli/main/install.sh | sh
 
 # 2. Store a profile (interactive, or via flags)
 xo configure --profile lab \
@@ -60,7 +60,7 @@ xo vm list
 ### Install script
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/littlejo/xo-cli/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/littlejo/xo-gocli/main/install.sh | sh
 ```
 
 The script detects your OS and architecture, downloads the latest release
@@ -70,7 +70,7 @@ artifact, verifies its checksum, and installs the binary to
 ### Manual download
 
 Download `xo_<version>_<os>_<arch>.tar.gz` (or `.zip` on Windows) from the
-[Releases page](https://github.com/littlejo/xo-cli/releases), verify it against
+[Releases page](https://github.com/littlejo/xo-gocli/releases), verify it against
 `xo_<version>_checksums.txt`, extract it and put the `xo` binary on your
 `PATH`.
 

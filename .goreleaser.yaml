@@ -37,7 +37,7 @@ changelog:
 
 release:
   # The GitHub repository is auto-detected from the git remote
-  # (github.com/<owner>/xo-cli), so owner/name are intentionally not set.
+  # (github.com/<owner>/xo-gocli), so owner/name are intentionally not set.
   # Releases are created as drafts so a human reviews before publishing.
   # Set to false to publish automatically.
   draft: true

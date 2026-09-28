@@ -1,17 +1,17 @@
 #!/usr/bin/env sh
 # Installs the xo CLI from the latest GitHub release.
 #
-#   curl -fsSL https://raw.githubusercontent.com/littlejo/xo-cli/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/littlejo/xo-gocli/main/install.sh | sh
 #
 # Override the default values with environment variables:
-#   XO_INSTALL_REPO   GitHub repository (owner/name), default littlejo/xo-cli
+#   XO_INSTALL_REPO   GitHub repository (owner/name), default littlejo/xo-gocli
 #   XO_INSTALL_VERSION  Specific version to install, default: latest release
 #   XO_INSTALL_DIR    Installation directory, default /usr/local/bin
 #                     (falls back to ~/.local/bin when not writable)
 
 set -eu
 
-REPO="${XO_INSTALL_REPO:-littlejo/xo-cli}"
+REPO="${XO_INSTALL_REPO:-littlejo/xo-gocli}"
 INSTALL_DIR="${XO_INSTALL_DIR:-}"
 
 err() {
