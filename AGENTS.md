@@ -41,7 +41,7 @@ The dependency hierarchy must remain:
 ```text
 CLI commands
       ↓
-xo-cli domain/UX layer
+xo-gocli domain/UX layer
       ↓
 xenorchestra-go-sdk/v2
       ↓
@@ -818,7 +818,7 @@ The most important architectural rule in this repository is:
                     UX
                      │
                      ▼
-                  xo-cli
+                  xo-gocli
                      │
                      ▼
        xenorchestra-go-sdk/v2
