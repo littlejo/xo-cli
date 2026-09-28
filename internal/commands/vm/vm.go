@@ -11,6 +11,11 @@ func NewCommand() *cobra.Command {
 		Use:   "vm",
 		Short: "Manage virtual machines",
 	}
+	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newListCommand())
+	cmd.AddCommand(newStartCommand())
+	cmd.AddCommand(newStopCommand())
+	cmd.AddCommand(newRebootCommand())
+	cmd.AddCommand(newSnapshotCommand())
 	return cmd
 }
