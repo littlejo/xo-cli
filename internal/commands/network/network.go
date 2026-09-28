@@ -11,6 +11,7 @@ func NewCommand() *cobra.Command {
 		Use:   "network",
 		Short: "Manage networks",
 	}
+	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newListCommand())
 	return cmd
 }
