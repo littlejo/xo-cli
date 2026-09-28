@@ -1,0 +1,56 @@
+name: Version
+
+on:
+  push:
+    branches:
+      - main
+
+# Pushing the computed tag requires write access to the repository contents.
+permissions:
+  contents: write
+
+# If a new push arrives while a version job is running, cancel the old one so
+# the latest commit always wins.
+concurrency:
+  group: version-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  version:
+    # Belt and braces: only the default branch, even if the list above changes.
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history so that every past tag is visible.
+          fetch-depth: 0
+
+      - name: Compute next version
+        id: bump
+        run: |
+          set -euo pipefail
+          OUT="$(bash .github/scripts/bump-version.sh)"
+          echo "$OUT"
+          # The LAST line of the script is the decision: "vX.Y.Z" or "SKIP".
+          LAST_LINE="$(printf '%s\n' "$OUT" | tail -n1)"
+          if [ "$LAST_LINE" = "SKIP" ]; then
+            echo "HEAD is already tagged, nothing to do"
+            echo "version=" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=$LAST_LINE" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.bump.outputs.version != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.bump.outputs.version }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" -m "release: ${VERSION}"
+          git push origin "refs/tags/${VERSION}"
+          echo "Pushed ${VERSION} - the Release workflow will now build and publish it"
