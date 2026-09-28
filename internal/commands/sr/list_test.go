@@ -57,11 +57,11 @@ func fakeXO(t *testing.T, handler func(w http.ResponseWriter, r *http.Request)) 
 		}
 		if cookie, err := r.Cookie("authenticationToken"); err != nil || cookie.Value != "test-token" {
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, `{"message":"unauthorized"}`)
+			_, _ = fmt.Fprint(w, `{"message":"unauthorized"}`)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, fixtureSRs)
+		_, _ = fmt.Fprint(w, fixtureSRs)
 	}))
 }
 
@@ -166,7 +166,7 @@ func TestSRListType(t *testing.T) {
 			t.Errorf("expected filter=SR_type:lvm, got %q", r.URL.Query().Get("filter"))
 		}
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, fixtureSRs)
+		_, _ = fmt.Fprint(w, fixtureSRs)
 	})
 	defer server.Close()
 	isolatePointers(t, server.URL)
@@ -182,7 +182,7 @@ func TestSRListLimit(t *testing.T) {
 			t.Errorf("expected limit=3, got %q", r.URL.Query().Get("limit"))
 		}
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, fixtureSRs)
+		_, _ = fmt.Fprint(w, fixtureSRs)
 	})
 	defer server.Close()
 	isolatePointers(t, server.URL)
@@ -195,7 +195,7 @@ func TestSRListLimit(t *testing.T) {
 func TestSRListAPIError(t *testing.T) {
 	server := fakeXO(t, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, `{"message":"boom"}`)
+		_, _ = fmt.Fprint(w, `{"message":"boom"}`)
 	})
 	defer server.Close()
 	isolatePointers(t, server.URL)

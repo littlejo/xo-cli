@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/config"
@@ -46,23 +45,20 @@ func OutputFormat(cmd *cobra.Command) string {
 }
 
 // NewClient resolves the selected profile and builds an authenticated SDK v2
-// client. The returned cancel function must be called to release resources.
-func NewClient(ctx context.Context, cmd *cobra.Command, cfg *xoconfig.ClientConfig) (library.Library, context.CancelFunc, error) {
+// client. Commands must pass their cobra context to the SDK operations so
+// that cancellation (Ctrl+C) reaches the HTTP layer; the SDK client enforces
+// its own per-request timeout.
+func NewClient(cmd *cobra.Command, cfg *xoconfig.ClientConfig) (library.Library, error) {
 	sdkConfig, err := buildSDKConfig(cfg)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-
-	// The SDK HTTP client has its own timeout; keep the command context so
-	// that Ctrl+C still cancels in-flight requests.
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 
 	client, err := xov2.New(sdkConfig)
 	if err != nil {
-		cancel()
-		return nil, nil, newConnectionError(cfg, err)
+		return nil, newConnectionError(cfg, err)
 	}
-	return client, cancel, nil
+	return client, nil
 }
 
 func newConnectionError(cfg *xoconfig.ClientConfig, err error) error {

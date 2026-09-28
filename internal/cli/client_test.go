@@ -32,11 +32,10 @@ func TestNewClientRejectsSelfSignedWithoutInsecure(t *testing.T) {
 	server := fakeXOVMS(t)
 	defer server.Close()
 
-	client, cancel, err := NewClient(context.Background(), nil, newInsecureTestConfig(server.URL, false))
+	client, err := NewClient(nil, newInsecureTestConfig(server.URL, false))
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
-	defer cancel()
 
 	if _, err := client.VM().GetAll(context.Background(), 0, ""); err == nil {
 		t.Fatal("expected a TLS verification error")
@@ -47,11 +46,10 @@ func TestNewClientAcceptsSelfSignedWithInsecure(t *testing.T) {
 	server := fakeXOVMS(t)
 	defer server.Close()
 
-	client, cancel, err := NewClient(context.Background(), nil, newInsecureTestConfig(server.URL, true))
+	client, err := NewClient(nil, newInsecureTestConfig(server.URL, true))
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
-	defer cancel()
 
 	vms, err := client.VM().GetAll(context.Background(), 0, "")
 	if err != nil {

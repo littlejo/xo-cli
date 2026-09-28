@@ -51,11 +51,11 @@ func fakeXO(t *testing.T, handler func(w http.ResponseWriter, r *http.Request)) 
 		}
 		if cookie, err := r.Cookie("authenticationToken"); err != nil || cookie.Value != "test-token" {
 			w.WriteHeader(http.StatusUnauthorized)
-			fmt.Fprint(w, `{"message":"unauthorized"}`)
+			_, _ = fmt.Fprint(w, `{"message":"unauthorized"}`)
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, fixtureVMs)
+		_, _ = fmt.Fprint(w, fixtureVMs)
 	}))
 }
 
@@ -179,7 +179,7 @@ func TestVMListLimit(t *testing.T) {
 			t.Errorf("expected limit=3, got %q", r.URL.Query().Get("limit"))
 		}
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, fixtureVMs)
+		_, _ = fmt.Fprint(w, fixtureVMs)
 	})
 	defer server.Close()
 	isolatePointers(t, server.URL)
@@ -195,7 +195,7 @@ func TestVMListPowerState(t *testing.T) {
 			t.Errorf("expected filter=power_state:Running, got %q", r.URL.Query().Get("filter"))
 		}
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprint(w, fixtureVMs)
+		_, _ = fmt.Fprint(w, fixtureVMs)
 	})
 	defer server.Close()
 	isolatePointers(t, server.URL)
@@ -208,7 +208,7 @@ func TestVMListPowerState(t *testing.T) {
 func TestVMListAPIError(t *testing.T) {
 	server := fakeXO(t, func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, `{"message":"boom"}`)
+		_, _ = fmt.Fprint(w, `{"message":"boom"}`)
 	})
 	defer server.Close()
 	isolatePointers(t, server.URL)

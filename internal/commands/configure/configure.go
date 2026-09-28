@@ -98,7 +98,9 @@ Examples:
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(out, "Profile %q saved to %s\n", profile.Name, path)
+			if _, err := fmt.Fprintf(out, "Profile %q saved to %s\n", profile.Name, path); err != nil {
+				return err
+			}
 			return nil
 		},
 	}
@@ -132,7 +134,9 @@ func prompt(in io.Reader, out io.Writer, label string, interactive bool) (string
 	if !interactive {
 		return "", fmt.Errorf("--%s is required (or set the corresponding XO_ environment variable)", label)
 	}
-	fmt.Fprintf(out, "%s: ", label)
+	if _, err := fmt.Fprintf(out, "%s: ", label); err != nil {
+		return "", err
+	}
 	line, err := bufio.NewReader(in).ReadString('\n')
 	if err != nil && strings.TrimSpace(line) == "" {
 		return "", fmt.Errorf("cannot read %s: %w", label, err)
@@ -141,13 +145,17 @@ func prompt(in io.Reader, out io.Writer, label string, interactive bool) (string
 }
 
 func promptSecret(in io.Reader, out io.Writer, label string) (string, error) {
-	fmt.Fprintf(out, "%s: ", label)
 	file, ok := in.(*os.File)
 	if !ok {
 		return "", fmt.Errorf("%s cannot be read in this context, use --%s", label, label)
 	}
+	if _, err := fmt.Fprintf(out, "%s: ", label); err != nil {
+		return "", err
+	}
 	secret, err := term.ReadPassword(int(file.Fd()))
-	fmt.Fprintln(out)
+	if _, ferr := fmt.Fprintln(out); ferr != nil && err == nil {
+		err = ferr
+	}
 	if err != nil {
 		return "", fmt.Errorf("cannot read %s: %w", label, err)
 	}

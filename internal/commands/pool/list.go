@@ -52,11 +52,10 @@ Examples:
 				return err
 			}
 
-			xo, cancel, err := cli.NewClient(cmd.Context(), cmd, cfg)
+			xo, err := cli.NewClient(cmd, cfg)
 			if err != nil {
 				return err
 			}
-			defer cancel()
 
 			pools, err := xo.Pool().GetAll(cmd.Context(), limit, "")
 			if err != nil {

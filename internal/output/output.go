@@ -207,7 +207,7 @@ func RenderTable(w io.Writer, headers []string, rows [][]string) error {
 		}
 	}
 	const columnGap = 2
-	writeRow := func(cells []string) {
+	writeRow := func(cells []string) error {
 		parts := make([]string, 0, len(cells))
 		for i, cell := range cells {
 			if i < len(widths) && i < len(cells)-1 {
@@ -216,16 +216,23 @@ func RenderTable(w io.Writer, headers []string, rows [][]string) error {
 				parts = append(parts, cell)
 			}
 		}
-		fmt.Fprintln(w, strings.TrimRight(strings.Join(parts, ""), " "))
+		_, err := fmt.Fprintln(w, strings.TrimRight(strings.Join(parts, ""), " "))
+		return err
 	}
-	writeRow(headers)
+	if err := writeRow(headers); err != nil {
+		return err
+	}
 	separator := make([]string, len(headers))
 	for i, width := range widths {
 		separator[i] = strings.Repeat("-", width)
 	}
-	writeRow(separator)
+	if err := writeRow(separator); err != nil {
+		return err
+	}
 	for _, row := range rows {
-		writeRow(row)
+		if err := writeRow(row); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -254,8 +261,8 @@ func renderValue(w io.Writer, data any) error {
 	case nil:
 		return nil
 	case string:
-		fmt.Fprintln(w, value)
-		return nil
+		_, err := fmt.Fprintln(w, value)
+		return err
 	case []any:
 		allStrings := true
 		for _, item := range value {
@@ -266,7 +273,9 @@ func renderValue(w io.Writer, data any) error {
 		}
 		if allStrings {
 			for _, item := range value {
-				fmt.Fprintln(w, item.(string))
+				if _, err := fmt.Fprintln(w, item.(string)); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
@@ -292,7 +301,9 @@ func renderText(w io.Writer, data any) error {
 			}
 			sortStrings(keys)
 			for _, key := range keys {
-				fmt.Fprintf(w, "%s: %s\n", key, scalar(value[key]))
+				if _, err := fmt.Fprintf(w, "%s: %s\n", key, scalar(value[key])); err != nil {
+					return err
+				}
 			}
 			return nil
 		default:
