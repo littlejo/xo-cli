@@ -18,6 +18,34 @@ and no legacy JSON-RPC (v1) code path.
    Xen Orchestra REST API
 ```
 
+## Quick start
+
+```sh
+# 1. Install the binary
+curl -fsSL https://raw.githubusercontent.com/littlejo/xo-cli/main/install.sh | sh
+
+# 2. Store a profile (interactive, or via flags)
+xo configure --profile lab \
+  --endpoint https://xo.example.com \
+  --token <token>
+
+# 3. List VMs
+xo vm list --profile lab
+
+# 4. Get machine-readable output
+xo vm list --profile lab --output json | jq '.[].name_label'
+
+# 5. Filter with a JMESPath query
+xo vm list --profile lab --query '[?power_state==`Running`].name_label'
+```
+
+You can also select the profile with an environment variable:
+
+```sh
+export XO_PROFILE=lab
+xo vm list
+```
+
 ## Features
 
 - Resource-oriented commands (`xo vm list`, `xo sr list`, `xo pool list`, …)
@@ -29,10 +57,22 @@ and no legacy JSON-RPC (v1) code path.
 
 ## Installation
 
-### From a release
+### Install script
 
-Download the archive for your platform from the **Releases** page of this
-repository and drop the `xo` binary on your `PATH`.
+```sh
+curl -fsSL https://raw.githubusercontent.com/littlejo/xo-cli/main/install.sh | sh
+```
+
+The script detects your OS and architecture, downloads the latest release
+artifact, verifies its checksum, and installs the binary to
+`/usr/local/bin` (or `~/.local/bin` if you don't have write access).
+
+### Manual download
+
+Download `xo_<version>_<os>_<arch>.tar.gz` (or `.zip` on Windows) from the
+[Releases page](https://github.com/littlejo/xo-cli/releases), verify it against
+`xo_<version>_checksums.txt`, extract it and put the `xo` binary on your
+`PATH`.
 
 ### From source
 
@@ -47,31 +87,6 @@ or, with mise:
 ```sh
 mise install
 mise run build      # -> dist/xo
-```
-
-## Quick start
-
-```sh
-# 1. Store a profile (interactive, or via flags)
-xo configure --profile lab \
-  --endpoint https://xo.example.com \
-  --token <token>
-
-# 2. List VMs
-xo vm list --profile lab
-
-# 3. Get machine-readable output
-xo vm list --profile lab --output json | jq '.[].name_label'
-
-# 4. Filter with a JMESPath query
-xo vm list --profile lab --query '[?power_state==`Running`].name_label'
-```
-
-You can also select the profile with an environment variable:
-
-```sh
-export XO_PROFILE=lab
-xo vm list
 ```
 
 ## Configuration
