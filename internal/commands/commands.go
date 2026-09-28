@@ -7,6 +7,7 @@ import (
 	"github.com/littlejo/xo-gocli/internal/cli"
 	"github.com/littlejo/xo-gocli/internal/commands/configure"
 	"github.com/littlejo/xo-gocli/internal/commands/host"
+	"github.com/littlejo/xo-gocli/internal/commands/network"
 	"github.com/littlejo/xo-gocli/internal/commands/pool"
 	"github.com/littlejo/xo-gocli/internal/commands/sr"
 	"github.com/littlejo/xo-gocli/internal/commands/task"
@@ -32,6 +33,7 @@ Configure a profile first with 'xo configure'.`,
 
 	root.AddCommand(configure.NewCommand())
 	root.AddCommand(host.NewCommand())
+	root.AddCommand(network.NewCommand())
 	root.AddCommand(pool.NewCommand())
 	root.AddCommand(sr.NewCommand())
 	root.AddCommand(task.NewCommand())
