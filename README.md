@@ -201,6 +201,14 @@ xo pool list
 xo pool list --query '[?HA_enabled].name_label'
 ```
 
+### `xo task`
+
+```sh
+xo task list                        # all asynchronous tasks
+xo task list --status failure       # filter by status (pending, success, failure, interrupted)
+xo task list --query '[].id'
+```
+
 ### `xo template`
 
 In Xen Orchestra, templates are first-class objects (REST resource
@@ -288,7 +296,7 @@ git tag v1.0.0 && git push origin v1.0.0
 - [x] `xo host list`
 - [x] `xo vm get / start / stop / reboot / snapshot`
 - [x] `xo template list / get`
-- [ ] `xo task list` (asynchronous operations)
+- [x] `xo task list` (asynchronous operations)
 
 ## License
 
