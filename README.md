@@ -48,7 +48,7 @@ xo vm list
 
 ## Features
 
-- Resource-oriented commands (`xo vm list`, `xo sr list`, `xo pool list`, …)
+- Resource-oriented commands (`xo vm list`, `xo host list`, `xo sr list`, `xo pool list`, …)
 - Multiple connection profiles, AWS-style (`--profile`, `$XO_PROFILE`)
 - Human-friendly default output plus `--output json|yaml|text` for scripting
 - AWS-CLI-like `--query` using [JMESPath](https://jmespath.org/)
@@ -162,6 +162,14 @@ xo vm list --limit 10               # cap the number of results
 xo vm list --query '[].name_label'  # project a single field
 ```
 
+### `xo host`
+
+```sh
+xo host list
+xo host list --query '[].name_label'
+xo host list --query '[?power_state==`Running`].name_label'
+```
+
 ### `xo sr`
 
 ```sh
@@ -248,7 +256,7 @@ git tag v1.0.0 && git push origin v1.0.0
 - [x] `xo vm list`
 - [x] `xo sr list`
 - [x] `xo pool list`
-- [ ] `xo host list`
+- [x] `xo host list`
 - [ ] `xo vm get / start / stop / reboot / snapshot`
 - [ ] `xo task list` (asynchronous operations)
 
