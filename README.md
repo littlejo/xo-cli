@@ -184,6 +184,7 @@ non-interactively.
 xo host list
 xo host list --query '[].name_label'
 xo host list --query '[?power_state==`Running`].name_label'
+xo host get <id>
 ```
 
 ### `xo sr`
@@ -192,6 +193,7 @@ xo host list --query '[?power_state==`Running`].name_label'
 xo sr list
 xo sr list --type lvm               # filter by SR type (lvm, nfs, ext, iso, …)
 xo sr list --query '[?SR_type==`nfs`].name_label'
+xo sr get <id>
 ```
 
 ### `xo pool`
@@ -199,6 +201,7 @@ xo sr list --query '[?SR_type==`nfs`].name_label'
 ```sh
 xo pool list
 xo pool list --query '[?HA_enabled].name_label'
+xo pool get <id>
 ```
 
 ### `xo network`
@@ -319,9 +322,9 @@ git tag v1.0.0 && git push origin v1.0.0
 
 - [x] `xo configure` + profiles
 - [x] `xo vm list`
-- [x] `xo sr list`
-- [x] `xo pool list`
-- [x] `xo host list`
+- [x] `xo host list / get`
+- [x] `xo sr list / get`
+- [x] `xo pool list / get`
 - [x] `xo network list / get`
 - [x] `xo vm get / start / stop / reboot / snapshot`
 - [x] `xo template list / get`

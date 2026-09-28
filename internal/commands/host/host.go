@@ -11,6 +11,7 @@ func NewCommand() *cobra.Command {
 		Use:   "host",
 		Short: "Manage hosts",
 	}
+	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newListCommand())
 	return cmd
 }
