@@ -1,4 +1,4 @@
-# xo-cli
+# xo Go CLI
 
 A modern command line client for [Xen Orchestra](https://github.com/vates/xen-orchestra),
 written in Go with an AWS-CLI-like experience.
@@ -9,7 +9,7 @@ It talks to the Xen Orchestra **REST API** only — there is no second HTTP clie
 and no legacy JSON-RPC (v1) code path.
 
 ```text
-   xo CLI (commands / output / query / config)
+   xo Go CLI (commands / output / query / config)
         │
         ▼
    xenorchestra-go-sdk/v2          ← the only Xen Orchestra client
