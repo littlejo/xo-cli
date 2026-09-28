@@ -25,7 +25,7 @@ The VM is referenced by its UUID, as returned by 'xo vm list'.
 Examples:
   xo vm get 550e8400-e29b-41d4-a716-446655440001
   xo vm get <id> --output json
-  xo vm get <id> --query '.name_label'`,
+  xo vm get <id> --query 'name_label'`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			id, err := parseID(args[0])
@@ -54,7 +54,7 @@ Examples:
 		},
 	}
 
-	cmd.Flags().StringVar(&query, flagQuery, "", "JMESPath expression applied to the result, e.g. '.name_label'")
+	cmd.Flags().StringVar(&query, flagQuery, "", "JMESPath expression applied to the result, e.g. 'name_label'")
 	return cmd
 }
 
