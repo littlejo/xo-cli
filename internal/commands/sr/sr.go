@@ -11,6 +11,7 @@ func NewCommand() *cobra.Command {
 		Use:   "sr",
 		Short: "Manage storage repositories",
 	}
+	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newListCommand())
 	return cmd
 }

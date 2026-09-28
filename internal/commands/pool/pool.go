@@ -11,6 +11,7 @@ func NewCommand() *cobra.Command {
 		Use:   "pool",
 		Short: "Manage pools",
 	}
+	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newListCommand())
 	return cmd
 }
