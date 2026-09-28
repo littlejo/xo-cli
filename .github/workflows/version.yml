@@ -5,9 +5,11 @@ on:
     branches:
       - main
 
-# Pushing the computed tag requires write access to the repository contents.
+# Pushing the computed tag requires write access to the repository contents;
+# triggering the Release workflow requires write access to Actions.
 permissions:
   contents: write
+  actions: write
 
 # If a new push arrives while a version job is running, cancel the old one so
 # the latest commit always wins.
