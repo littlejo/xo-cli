@@ -6,6 +6,7 @@ import (
 
 	"github.com/littlejo/xo-gocli/internal/cli"
 	"github.com/littlejo/xo-gocli/internal/commands/configure"
+	"github.com/littlejo/xo-gocli/internal/commands/host"
 	"github.com/littlejo/xo-gocli/internal/commands/pool"
 	"github.com/littlejo/xo-gocli/internal/commands/sr"
 	"github.com/littlejo/xo-gocli/internal/commands/vm"
@@ -28,6 +29,7 @@ Configure a profile first with 'xo configure'.`,
 	root.PersistentFlags().String(cli.FlagOutput, "table", "output format: table, json, yaml, text")
 
 	root.AddCommand(configure.NewCommand())
+	root.AddCommand(host.NewCommand())
 	root.AddCommand(pool.NewCommand())
 	root.AddCommand(sr.NewCommand())
 	root.AddCommand(vm.NewCommand())
