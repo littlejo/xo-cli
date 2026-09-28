@@ -218,6 +218,25 @@ xo task list --query '[].id'
 xo task get <id>                    # one task (table/json/yaml)
 ```
 
+### `xo token`
+
+Manage the authentication tokens of the current user (the same value `xo
+configure` stores). The token **id is the secret**, so it is masked in the
+output by default — pass `--no-secret` to reveal it (use with care).
+
+```sh
+xo token list                         # your tokens (id masked)
+xo token list --no-secret --query '[].id'
+xo token get <id>                     # one token (resolved against the list)
+xo token create                       # create a token, printed in full once
+xo token create --description "ci" --expires-in "30 days"
+xo token create --client-id my-cli    # reuse the token for a given client
+```
+
+`create` prints the token in full **once** (save it, e.g. into `xo
+configure`); `list`/`get` only show a masked id. Deletion is not exposed by
+the REST API and is therefore not implemented here.
+
 ### `xo template`
 
 In Xen Orchestra, templates are first-class objects (REST resource
@@ -307,6 +326,7 @@ git tag v1.0.0 && git push origin v1.0.0
 - [x] `xo vm get / start / stop / reboot / snapshot`
 - [x] `xo template list / get`
 - [x] `xo task list / get` (asynchronous operations)
+- [x] `xo token list / get / create`
 
 ## License
 
