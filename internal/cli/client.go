@@ -12,7 +12,7 @@ import (
 
 	xov2 "github.com/vatesfr/xenorchestra-go-sdk/v2"
 
-	xoconfig "github.com/vatesfr/xo-cli/internal/config"
+	xoconfig "github.com/littlejo/xo-gocli/internal/config"
 )
 
 const (

@@ -7,8 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/vatesfr/xo-cli/internal/cli"
-	"github.com/vatesfr/xo-cli/internal/commands"
+	"github.com/littlejo/xo-gocli/internal/cli"
+	"github.com/littlejo/xo-gocli/internal/commands"
 )
 
 func main() {

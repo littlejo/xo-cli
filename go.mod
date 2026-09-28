@@ -1,4 +1,4 @@
-module github.com/vatesfr/xo-cli
+module github.com/littlejo/xo-gocli
 
 go 1.26.0
 

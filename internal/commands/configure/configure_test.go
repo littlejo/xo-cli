@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/vatesfr/xo-cli/internal/cli"
-	"github.com/vatesfr/xo-cli/internal/config"
+	"github.com/littlejo/xo-gocli/internal/cli"
+	"github.com/littlejo/xo-gocli/internal/config"
 )
 
 // newTestRoot mirrors the production root flags that configure relies on.

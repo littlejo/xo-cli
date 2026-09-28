@@ -13,7 +13,7 @@ builds:
     goarch: [amd64, arm64]
     ldflags:
       - -s -w
-      - -X github.com/vatesfr/xo-cli/internal/cli.Version={{.Version}}
+      - -X github.com/littlejo/xo-gocli/internal/cli.Version={{.Version}}
 
 archives:
   - id: xo

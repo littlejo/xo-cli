@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	xoconfig "github.com/vatesfr/xo-cli/internal/config"
+	xoconfig "github.com/littlejo/xo-gocli/internal/config"
 )
 
 // fakeXOVMS serves the VM list endpoint behind the self-signed TLS

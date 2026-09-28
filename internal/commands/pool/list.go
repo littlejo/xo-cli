@@ -8,9 +8,9 @@ import (
 
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/payloads"
 
-	"github.com/vatesfr/xo-cli/internal/cli"
-	"github.com/vatesfr/xo-cli/internal/config"
-	"github.com/vatesfr/xo-cli/internal/output"
+	"github.com/littlejo/xo-gocli/internal/cli"
+	"github.com/littlejo/xo-gocli/internal/config"
+	"github.com/littlejo/xo-gocli/internal/output"
 )
 
 const (

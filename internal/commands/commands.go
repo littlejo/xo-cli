@@ -4,11 +4,11 @@ package commands
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/vatesfr/xo-cli/internal/cli"
-	"github.com/vatesfr/xo-cli/internal/commands/configure"
-	"github.com/vatesfr/xo-cli/internal/commands/pool"
-	"github.com/vatesfr/xo-cli/internal/commands/sr"
-	"github.com/vatesfr/xo-cli/internal/commands/vm"
+	"github.com/littlejo/xo-gocli/internal/cli"
+	"github.com/littlejo/xo-gocli/internal/commands/configure"
+	"github.com/littlejo/xo-gocli/internal/commands/pool"
+	"github.com/littlejo/xo-gocli/internal/commands/sr"
+	"github.com/littlejo/xo-gocli/internal/commands/vm"
 )
 
 // NewRoot builds the root command with its global flags and subcommands.

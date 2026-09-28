@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/vatesfr/xo-cli/internal/cli"
+	"github.com/littlejo/xo-gocli/internal/cli"
 )
 
 const fixturePools = `[
