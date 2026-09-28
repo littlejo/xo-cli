@@ -48,7 +48,7 @@ xo vm list
 
 ## Features
 
-- Resource-oriented commands (`xo vm list`, `xo host list`, `xo sr list`, `xo pool list`, …)
+- Resource-oriented commands (`xo vm list`, `xo host list`, `xo template list`, `xo sr list`, `xo pool list`, …)
 - Multiple connection profiles, AWS-style (`--profile`, `$XO_PROFILE`)
 - Human-friendly default output plus `--output json|yaml|text` for scripting
 - AWS-CLI-like `--query` using [JMESPath](https://jmespath.org/)
@@ -201,6 +201,18 @@ xo pool list
 xo pool list --query '[?HA_enabled].name_label'
 ```
 
+### `xo template`
+
+In Xen Orchestra, templates are first-class objects (REST resource
+`vm-templates`), not part of the `vms` collection — so `xo vm list` does not
+show them. `xo template list` reads that dedicated resource.
+
+```sh
+xo template list
+xo template list --output json
+xo template list --query '[].name_label'
+```
+
 More resources and sub-commands (`get`, `start`, `stop`, …) are added on top of
 the SDK as it evolves. See `xo <resource> --help` for the current surface.
 
@@ -274,6 +286,7 @@ git tag v1.0.0 && git push origin v1.0.0
 - [x] `xo pool list`
 - [x] `xo host list`
 - [x] `xo vm get / start / stop / reboot / snapshot`
+- [x] `xo template list`
 - [ ] `xo task list` (asynchronous operations)
 
 ## License
