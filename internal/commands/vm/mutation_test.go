@@ -9,9 +9,6 @@ import (
 	"testing"
 )
 
-// createdVMID is the id the fake server reports the create_vm task produced.
-const createdVMID = "550e8400-e29b-41d4-a716-446655440002"
-
 const createdVMTask = `{
 	"id": "task-123",
 	"status": "success",
@@ -73,15 +70,6 @@ func newMutationServer(t *testing.T) *mutationServer {
 func (s *mutationServer) requestByMethod(method string) (request, bool) {
 	for _, r := range s.requests {
 		if r.Method == method {
-			return r, true
-		}
-	}
-	return request{}, false
-}
-
-func (s *mutationServer) requestByPathPrefix(prefix string) (request, bool) {
-	for _, r := range s.requests {
-		if strings.HasPrefix(r.Path, prefix) {
 			return r, true
 		}
 	}
@@ -242,6 +230,47 @@ func TestVMUpdateName(t *testing.T) {
 	}
 }
 
+func TestVMUpdateTags(t *testing.T) {
+	server := newMutationServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	if _, err := runVM(t, "vm", "update", "550e8400-e29b-41d4-a716-446655440001", "--tags", "production,web"); err != nil {
+		t.Fatalf("vm update --tags: %v", err)
+	}
+	req, ok := server.requestByMethod(http.MethodPatch)
+	if !ok {
+		t.Fatal("expected a PATCH request")
+	}
+	var body map[string]any
+	if err := json.Unmarshal([]byte(req.Body), &body); err != nil {
+		t.Fatalf("cannot parse update body: %v\n%s", err, req.Body)
+	}
+	tags, ok := body["tags"].([]any)
+	if !ok {
+		t.Fatalf("expected tags to be an array, got %T: %s", body["tags"], req.Body)
+	}
+	if len(tags) != 2 || tags[0] != "production" || tags[1] != "web" {
+		t.Fatalf("expected tags=[production web], got %s", req.Body)
+	}
+	if _, present := body["nameLabel"]; present {
+		t.Fatalf("nameLabel must not be sent when --name is not given: %s", req.Body)
+	}
+}
+
+func TestVMUpdateBadTags(t *testing.T) {
+	server := newMutationServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	if _, err := runVM(t, "vm", "update", "550e8400-e29b-41d4-a716-446655440001", "--tags", " , "); err == nil {
+		t.Fatal("expected an error for an empty --tags list")
+	}
+	if _, ok := server.requestByMethod(http.MethodPatch); ok {
+		t.Fatal("update must not be executed for an empty --tags list")
+	}
+}
+
 func TestVMUpdateRequiresField(t *testing.T) {
 	server := newMutationServer(t)
 	defer server.Close()
@@ -284,5 +313,28 @@ func TestParseMemory(t *testing.T) {
 		if _, err := parseMemory(bad); err == nil {
 			t.Fatalf("parseMemory(%q) should fail", bad)
 		}
+	}
+}
+
+func TestParseTags(t *testing.T) {
+	got, err := parseTags("production, web, ci")
+	if err != nil {
+		t.Fatalf("parseTags: %v", err)
+	}
+	want := []string{"production", "web", "ci"}
+	if len(got) != len(want) {
+		t.Fatalf("parseTags = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("parseTags = %v, want %v", got, want)
+		}
+	}
+
+	if tags, err := parseTags(""); err != nil || tags != nil {
+		t.Fatalf("parseTags(\"\") = %v, %v; want nil, nil", tags, err)
+	}
+	if _, err := parseTags(" , "); err == nil {
+		t.Fatal("parseTags(\" , \") should fail")
 	}
 }

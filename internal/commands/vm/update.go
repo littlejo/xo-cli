@@ -40,15 +40,20 @@ func newUpdateCommand() *cobra.Command {
 	var (
 		name        string
 		description string
+		tags        string
 	)
 
 	cmd := &cobra.Command{
 		Use:   "update <id>",
-		Short: "Update the name or description of a virtual machine",
-		Long: `Update the name_label and/or name_description of a virtual machine.
+		Short: "Update the name, description or tags of a virtual machine",
+		Long: `Update the name_label, name_description and/or tags of a virtual machine.
 
-At least one of --name or --description is required. Only the fields that are
-given are changed; the others are left untouched.
+At least one of --name, --description or --tags is required. Only the fields
+that are given are changed; the others are left untouched.
+
+--tags REPLACES the full tag list of the VM (it is not a merge). Give the
+complete, comma-separated list you want the VM to end up with. To add or
+remove a single tag without touching the others, use 'xo vm tag add/remove'.
 
 The VM is referenced by its UUID, as returned by 'xo vm list'.
 
@@ -58,11 +63,16 @@ performed through the SDK's own REST client against PATCH /vms/<id>.
 Examples:
   xo vm update 550e8400-e29b-41d4-a716-446655440001 --name web-01
   xo vm update <id> --description "primary web server"
-  xo vm update <id> --name web-01 --description "primary web server"`,
+  xo vm update <id> --tags production,web
+  xo vm update <id> --name web-01 --description "primary web server" --tags prod`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if name == "" && description == "" {
-				return fmt.Errorf("nothing to update: provide --name and/or --description")
+			tagList, err := parseTags(tags)
+			if err != nil {
+				return err
+			}
+			if name == "" && description == "" && tags == "" {
+				return fmt.Errorf("nothing to update: provide --name, --description and/or --tags")
 			}
 			format, err := output.ParseFormat(cli.OutputFormat(cmd))
 			if err != nil {
@@ -85,6 +95,9 @@ Examples:
 			}
 			if description != "" {
 				body["nameDescription"] = description
+			}
+			if tags != "" {
+				body["tags"] = tagList
 			}
 			encoded, err := json.Marshal(body)
 			if err != nil {
@@ -118,8 +131,29 @@ Examples:
 	flags := cmd.Flags()
 	flags.StringVar(&name, "name", "", "new name_label for the VM")
 	flags.StringVar(&description, flagDescription, "", "new name_description for the VM")
+	flags.StringVar(&tags, "tags", "", "full comma-separated list of tags to set (replaces the existing list)")
 
 	return cmd
+}
+
+// parseTags splits a comma-separated tag list into a clean []string, dropping
+// empty entries. It returns an error if the input is non-empty but yields no
+// usable tags, so that e.g. --tags "," is rejected rather than clearing tags.
+func parseTags(value string) ([]string, error) {
+	if strings.TrimSpace(value) == "" {
+		return nil, nil
+	}
+	var tags []string
+	for _, part := range strings.Split(value, ",") {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			tags = append(tags, trimmed)
+		}
+	}
+	if len(tags) == 0 {
+		return nil, fmt.Errorf("invalid --tags %q (no tags after splitting)", value)
+	}
+	return tags, nil
 }
 
 // patchVM sends a JSON PATCH to /rest/v0/vms/<id> using the SDK v2 REST client.
@@ -166,8 +200,8 @@ func renderUpdatedVM(cmd *cobra.Command, format output.Format, vm *payloads.VM) 
 		}
 		return output.Render(w, format, output.Table{}, normalized, nil)
 	default:
-		_, err := fmt.Fprintf(w, "VM %q updated:\n  id:     %s\n  name:   %s\n  desc:   %s\n  state:  %s\n",
-			vm.NameLabel, vm.ID.String(), vm.NameLabel, vm.NameDescription, vm.PowerState)
+		_, err := fmt.Fprintf(w, "VM %q updated:\n  id:     %s\n  name:   %s\n  desc:   %s\n  tags:   %s\n  state:  %s\n",
+			vm.NameLabel, vm.ID.String(), vm.NameLabel, vm.NameDescription, strings.Join(vm.Tags, ", "), vm.PowerState)
 		return err
 	}
 }
