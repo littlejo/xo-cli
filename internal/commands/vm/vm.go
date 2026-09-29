@@ -13,6 +13,9 @@ func NewCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newListCommand())
+	cmd.AddCommand(newCreateCommand())
+	cmd.AddCommand(newUpdateCommand())
+	cmd.AddCommand(newTagCommand())
 	cmd.AddCommand(newStartCommand())
 	cmd.AddCommand(newStopCommand())
 	cmd.AddCommand(newRebootCommand())
