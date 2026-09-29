@@ -59,6 +59,10 @@ jobs:
   # the CLI is answered 401 out of the box. ci/xo-api-sim-cookie-auth.patch
   # makes the simulator accept the cookie too (a known gap to fix upstream).
   # See that file for the full explanation.
+  #
+  # The simulator runs from its compiled entry (node dist/index.js), the same
+  # way its own CI does: `npm start` (ts-node) breaks at runtime with the
+  # ESM-only uuid v14 dependency.
   functional:
     runs-on: ubuntu-latest
     steps:
@@ -84,9 +88,13 @@ jobs:
           git -C xo-api-sim apply ../ci/xo-api-sim-cookie-auth.patch
           git -C xo-api-sim status --short
 
-      - name: Install xo-api-sim
+      - name: Install and build xo-api-sim
         working-directory: xo-api-sim
-        run: npm ci
+        run: |
+          # --ignore-scripts: the prepare script runs the build already; we do
+          # it explicitly below (same flow as xo-api-sim's own CI).
+          npm ci --ignore-scripts
+          npm run build
 
       - name: Run functional tests against xo-api-sim
         env:
@@ -94,7 +102,7 @@ jobs:
           XO_TEST_TOKEN: test-token
         run: |
           set -euo pipefail
-          ( cd xo-api-sim && PORT=3001 AUTH_TOKEN=test-token npm start > /tmp/xo-api-sim.log 2>&1 & echo $! > /tmp/xo-api-sim.pid )
+          ( cd xo-api-sim && PORT=3001 AUTH_TOKEN=test-token node dist/index.js > /tmp/xo-api-sim.log 2>&1 & echo $! > /tmp/xo-api-sim.pid )
           SIM_PID=$(cat /tmp/xo-api-sim.pid)
           cleanup() { kill "$SIM_PID" 2>/dev/null || true; }
           trap cleanup EXIT
