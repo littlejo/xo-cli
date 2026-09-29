@@ -226,6 +226,31 @@ func TestRenderTextFormat(t *testing.T) {
 	}
 }
 
+func TestRenderTextListOfURIs(t *testing.T) {
+	// REST index endpoints (e.g. GET /rest/v0/vms) return a list of
+	// resource URIs rather than full objects. The text rendering must
+	// print them one per line instead of dropping them into an empty
+	// table (which renders nothing).
+	raw := []string{
+		"/rest/v0/vms/4316170b-604d-c06c-f790-de1ab64033b8",
+		"/rest/v0/vms/df39933a-4331-6405-56e5-721cc59c5672",
+	}
+	normalized, err := Normalize(raw)
+	if err != nil {
+		t.Fatalf("Normalize: %v", err)
+	}
+	var buf bytes.Buffer
+	if err := Render(&buf, FormatText, Table{}, normalized, nil); err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	out := buf.String()
+	for _, uri := range raw {
+		if !strings.Contains(out, uri) {
+			t.Fatalf("text output missing %q:\n%s", uri, out)
+		}
+	}
+}
+
 func TestNormalizeSDKLikeStruct(t *testing.T) {
 	normalized, err := Normalize(sampleData())
 	if err != nil {
