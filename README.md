@@ -78,7 +78,7 @@ tool*. This Go CLI is a typed, REST-only client with an AWS-CLI-like UX.
 | Live events                | `xo-cli watch [--ndjson]` (stream of notifications)                   | Not implemented                                                                   |
 | Raw REST escape hatch      | `xo-cli rest get/post/patch/put/del` for any endpoint                 | Not implemented yet (planned on top of SDK v2 HTTP facilities, not a second client) |
 | Task management            | `rest get tasks/<id> wait[=result]`, `rest post tasks/<id>/actions/abort` | `task list` / `task get` (list filterable by `--status`); lifecycle actions return the task id |
-| VM lifecycle               | All methods (`vm.start`, `vm.stop`, `vm.reboot`, `vm.pause`, …) | `create`, `start` (host pinning), `stop` (clean/hard, confirm + `--yes`), `reboot` (clean/hard), `snapshot`, `tag add/remove`, `update` (name/description) |
+| VM lifecycle               | All methods (`vm.start`, `vm.stop`, `vm.reboot`, `vm.pause`, …) | `create`, `start` (host pinning), `stop` (clean/hard, confirm + `--yes`), `reboot` (clean/hard), `snapshot`, `tag add/remove`, `update` (name/description/tags) |
 | VM import / export (XVA)   | `vm.import` / `vm.export` (file streaming with `@=`)                  | Not implemented (SDK v2 exposes VDI import/export)                                |
 | Token management           | `create-token` (accepts same params as `register`)                    | `token list / get / create` with secret masking in output                         |
 | Untyped parameters         | `param=value`, JSON values via `json:` prefix                          | Typed flags per command (validated at parse time)                                 |
@@ -244,6 +244,7 @@ xo vm create web-02 --pool <pool-id> --template <template-id> --boot
 # Update
 xo vm update <id> --name web-01
 xo vm update <id> --description "primary web server"
+xo vm update <id> --tags production,web     # replaces the full tag list
 
 # Tags
 xo vm tag add <id> production
