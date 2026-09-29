@@ -76,7 +76,7 @@ tool*. This Go CLI is a typed, REST-only client with an AWS-CLI-like UX.
 | Output formats             | Plain text or `--json`                                                | `table` (default), `json`, `yaml`, `text`                                         |
 | Filtering / projection     | `filter=` / `fields=` parameters (XO filter syntax)                   | AWS-CLI-like `--query` with JMESPath (incl. backtick literals)                    |
 | Live events                | `xo-cli watch [--ndjson]` (stream of notifications)                   | Not implemented                                                                   |
-| Raw REST escape hatch      | `xo-cli rest get/post/patch/put/del` for any endpoint                 | Not implemented yet (planned on top of SDK v2 HTTP facilities, not a second client) |
+| Raw REST escape hatch      | `xo-cli rest get/post/patch/put/del` for any endpoint                 | `xo rest <method> <path>` (on top of SDK v2 HTTP facilities, not a second client) |
 | Task management            | `rest get tasks/<id> wait[=result]`, `rest post tasks/<id>/actions/abort` | `task list` / `task get` (list filterable by `--status`); lifecycle actions return the task id |
 | VM lifecycle               | All methods (`vm.start`, `vm.stop`, `vm.reboot`, `vm.pause`, …) | `create`, `start` (host pinning), `stop` (clean/hard, confirm + `--yes`), `reboot` (clean/hard), `snapshot`, `tag add/remove`, `update` (name/description/tags) |
 | VM import / export (XVA)   | `vm.import` / `vm.export` (file streaming with `@=`)                  | Not implemented (SDK v2 exposes VDI import/export)                                |
@@ -102,7 +102,7 @@ tool*. This Go CLI is a typed, REST-only client with an AWS-CLI-like UX.
 | Import / export VM (XVA)                          | ✅ | ⬜ |
 | Manage tokens                                     | ✅ (`create-token`) | ✅ (`token list/get/create`, masking) |
 | Watch notifications in real time                  | ✅ | ⬜ |
-| Raw REST access (any endpoint)                    | ✅ | ⬜ (planned) |
+| Raw REST access (any endpoint)                    | ✅ | ✅ (`xo rest`) |
 | Call any other server method (server, users, groups, backups, VDI, VBD, PBD, …) | ✅ | ⬜ (added resource by resource on top of the SDK) |
 | Multiple instances / profiles                     | ⬜ (single registered instance) | ✅ |
 | Human-friendly tables                             | ⬜ | ✅ |
@@ -122,10 +122,10 @@ Legend: ✅ available — ⬜ not available.
   destructive operations, a static binary, and a REST-only architecture with
   no JSON-RPC/WebSocket dependency — better suited for automation, CI, and
   shell scripting.
-- **What is still missing** (roadmap): raw REST escape hatch, `watch`,
-  VM import/export, the remaining VM lifecycle operations (`delete`, `pause`,
-  `resume`, `suspend`), and more resources (VDI, VBD, servers, users, groups,
-  backups). These are added as they are exposed by the Go SDK v2, per the
+- **What is still missing** (roadmap): `watch`, VM import/export, the
+  remaining VM lifecycle operations (`delete`, `pause`, `resume`, `suspend`),
+  and more resources (VDI, VBD, servers, users, groups, backups). These are
+  added as they are exposed by the Go SDK v2, per the
   [architecture rules](AGENTS.md).
 
 ## Installation
@@ -340,6 +340,30 @@ xo template list --query '[].name_label'
 xo template get <id>            # one template (table/json/yaml)
 ```
 
+### `xo rest`
+
+Low-level escape hatch for any Xen Orchestra REST endpoint the SDK does not
+(yet) wrap in a typed command. The request goes through the SDK v2 HTTP client
+(same authentication, base URL and TLS handling), so it is not a second REST
+client. Prefer the typed commands when they cover what you need.
+
+The path is relative to the REST API root (`/rest/v0`).
+
+```sh
+xo rest get vms                                # list VMs (any endpoint works)
+xo rest get vms --param limit=10               # add query parameters
+xo rest get vms/<id>                           # GET a single object
+xo rest post vms --data '{"name_label":"web-01"}'   # send a JSON body
+xo rest patch vms/<id> --data '{"name_label":"x"}'  # partial update
+xo rest delete vms/<id> --yes                  # destructive: asks unless --yes
+xo rest post vms --data - < vm.json            # read the body from stdin
+xo rest get vms --output json --query '[].name_label'
+xo rest get vms -i                             # status line + headers on stderr
+```
+
+Flags: `--data/-d` (JSON body, `-` = stdin), `--param KEY=VALUE` (repeatable),
+`--header KEY: VALUE` (repeatable), `--query`, `--yes`, `--include/-i`.
+
 More resources and sub-commands (`get`, `start`, `stop`, …) are added on top of
 the SDK as it evolves. See `xo <resource> --help` for the current surface.
 
@@ -418,6 +442,7 @@ git tag v1.0.0 && git push origin v1.0.0
 - [x] `xo template list / get`
 - [x] `xo task list / get` (asynchronous operations)
 - [x] `xo token list / get / create`
+- [x] `xo rest` (raw REST escape hatch on top of SDK v2)
 
 ## License
 

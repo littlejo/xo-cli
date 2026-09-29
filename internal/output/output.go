@@ -312,8 +312,32 @@ func renderText(w io.Writer, data any) error {
 		}
 	}
 
+	// A list that does not contain objects (for example the list of
+	// resource URIs returned by a REST index endpoint such as
+	// /rest/v0/vms) cannot be turned into a column table. Render one
+	// value per line so nothing is dropped.
+	if !listHasObjects(list) {
+		for _, item := range list {
+			if _, err := fmt.Fprintln(w, scalar(item)); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
 	rows, headers := genericTable(list)
 	return RenderTable(w, headers, rows)
+}
+
+// listHasObjects reports whether list contains at least one object, i.e.
+// whether it can be rendered as a column table.
+func listHasObjects(list []any) bool {
+	for _, item := range list {
+		if _, ok := item.(map[string]any); ok {
+			return true
+		}
+	}
+	return false
 }
 
 // genericTable builds a table from a list of objects, using the union of the
