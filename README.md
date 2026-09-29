@@ -78,7 +78,7 @@ tool*. This Go CLI is a typed, REST-only client with an AWS-CLI-like UX.
 | Live events                | `xo-cli watch [--ndjson]` (stream of notifications)                   | Not implemented                                                                   |
 | Raw REST escape hatch      | `xo-cli rest get/post/patch/put/del` for any endpoint                 | Not implemented yet (planned on top of SDK v2 HTTP facilities, not a second client) |
 | Task management            | `rest get tasks/<id> wait[=result]`, `rest post tasks/<id>/actions/abort` | `task list` / `task get` (list filterable by `--status`); lifecycle actions return the task id |
-| VM lifecycle               | All methods (`vm.start`, `vm.stop`, `vm.reboot`, `vm.pause`, …)       | `start` (host pinning), `stop` (clean/hard, confirm + `--yes`), `reboot` (clean/hard), `snapshot` |
+| VM lifecycle               | All methods (`vm.start`, `vm.stop`, `vm.reboot`, `vm.pause`, …) | `create`, `start` (host pinning), `stop` (clean/hard, confirm + `--yes`), `reboot` (clean/hard), `snapshot`, `tag add/remove`, `update` (name/description) |
 | VM import / export (XVA)   | `vm.import` / `vm.export` (file streaming with `@=`)                  | Not implemented (SDK v2 exposes VDI import/export)                                |
 | Token management           | `create-token` (accepts same params as `register`)                    | `token list / get / create` with secret masking in output                         |
 | Untyped parameters         | `param=value`, JSON values via `json:` prefix                          | Typed flags per command (validated at parse time)                                 |
@@ -94,8 +94,10 @@ tool*. This Go CLI is a typed, REST-only client with an AWS-CLI-like UX.
 | List VM templates                                 | ✅ (`list-objects type=VM-template`) | ✅ (`xo template list`) |
 | Get a single object                               | ✅ (`rest get vms/<id>`) | ✅ (`xo <resource> get <id>`) |
 | Start / stop / reboot a VM                        | ✅ | ✅ |
+| Create a VM (from a template)                     | ✅ | ✅ (`xo vm create`) |
+| Update a VM (name, description)                   | ✅ | ✅ (`xo vm update`) |
+| Manage VM tags                                    | ✅ | ✅ (`xo vm tag add/remove`) |
 | Pause / resume / suspend / delete a VM            | ✅ | ⬜ (in SDK v2, not yet exposed) |
-| Create / update a VM (tags, name, description)    | ✅ | ⬜ (in SDK v2, not yet exposed) |
 | Snapshot a VM                                     | ✅ | ✅ |
 | Import / export VM (XVA)                          | ✅ | ⬜ |
 | Manage tokens                                     | ✅ (`create-token`) | ✅ (`token list/get/create`, masking) |
@@ -121,10 +123,10 @@ Legend: ✅ available — ⬜ not available.
   no JSON-RPC/WebSocket dependency — better suited for automation, CI, and
   shell scripting.
 - **What is still missing** (roadmap): raw REST escape hatch, `watch`,
-  VM import/export, the remaining VM lifecycle operations (`create`, `update`,
-  `delete`, `pause`, `resume`, `suspend`), and more resources (VDI, VBD,
-  servers, users, groups, backups). These are added as they are exposed by
-  the Go SDK v2, per the [architecture rules](AGENTS.md).
+  VM import/export, the remaining VM lifecycle operations (`delete`, `pause`,
+  `resume`, `suspend`), and more resources (VDI, VBD, servers, users, groups,
+  backups). These are added as they are exposed by the Go SDK v2, per the
+  [architecture rules](AGENTS.md).
 
 ## Installation
 
@@ -233,6 +235,19 @@ xo vm list --power-state Running    # filter by power state
 xo vm list --limit 10               # cap the number of results
 xo vm list --query '[].name_label'  # project a single field
 xo vm get <id>                      # one VM (table/json/yaml)
+
+# Create
+xo vm create web-02 --pool <pool-id> --template <template-id>
+xo vm create web-02 --pool <pool-id> --template <template-id> --memory 4G
+xo vm create web-02 --pool <pool-id> --template <template-id> --boot
+
+# Update
+xo vm update <id> --name web-01
+xo vm update <id> --description "primary web server"
+
+# Tags
+xo vm tag add <id> production
+xo vm tag remove <id> production
 
 # Lifecycle (all return an async task id)
 xo vm start <id>                    # power on
@@ -398,6 +413,7 @@ git tag v1.0.0 && git push origin v1.0.0
 - [x] `xo pool list / get`
 - [x] `xo network list / get`
 - [x] `xo vm get / start / stop / reboot / snapshot`
+- [x] `xo vm create / update / tag add / tag remove`
 - [x] `xo template list / get`
 - [x] `xo task list / get` (asynchronous operations)
 - [x] `xo token list / get / create`
