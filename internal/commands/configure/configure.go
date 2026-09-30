@@ -28,16 +28,26 @@ func NewCommand() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "configure",
-		Short: "Initialize or update a configuration profile",
-		Long: `Initialize or update a Xen Orchestra connection profile.
+		Short: "Manage configuration profiles",
+		Long: `Initialize or update a Xen Orchestra connection profile, or inspect and
+manage the stored profiles.
 
-Values can be provided with flags or interactively (when stdin is a terminal).
-Environment variables take precedence over the stored profile at run time.
+Without a sub-command, 'xo configure' stores (or updates) the profile
+selected with --profile: values can be provided with flags or interactively
+(when stdin is a terminal). Environment variables take precedence over the
+stored profile at run time.
+
+Sub-commands:
+  xo configure list           list the stored profiles
+  xo configure show [name]    show one profile (the selected one by default)
+  xo configure remove <name>  remove a stored profile
 
 Examples:
   xo configure
   xo configure --profile lab --endpoint https://xo.example.com --token <token>
-  xo configure --profile lab --username admin --password <secret>`,
+  xo configure --profile lab --username admin --password <secret>
+  xo configure list
+  xo configure remove lab`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			in := cmd.InOrStdin()
 			out := cmd.ErrOrStderr()
@@ -113,7 +123,11 @@ Examples:
 	flags.StringVar(&token, "token", "", "authentication token (or use --username/--password)")
 	flags.StringVar(&username, "username", "", "username (alternative to --token)")
 	flags.StringVar(&password, "password", "", "password (alternative to --token)")
-	flags.BoolVar(&insecure, "insecure", false, "skip TLS certificate verification")
+	flags.BoolVarP(&insecure, "insecure", "k", false, "skip TLS certificate verification")
+
+	cmd.AddCommand(newListCommand())
+	cmd.AddCommand(newShowCommand())
+	cmd.AddCommand(newRemoveCommand())
 
 	return cmd
 }

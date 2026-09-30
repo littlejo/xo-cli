@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -43,6 +44,21 @@ func ProfileName(cmd *cobra.Command) string {
 func OutputFormat(cmd *cobra.Command) string {
 	format, _ := cmd.Flags().GetString(FlagOutput)
 	return format
+}
+
+// SkipConfirm reports whether destructive operations should run without a
+// confirmation prompt: either the --yes flag or the $XO_YES environment
+// variable. The variable exists so scripts and CI pipelines can confirm
+// non-interactively without repeating --yes on every command; it is checked
+// only by confirmations, so setting it has no other effect.
+func SkipConfirm(cmd *cobra.Command) bool {
+	if yes, _ := cmd.Flags().GetBool("yes"); yes {
+		return true
+	}
+	if v := os.Getenv("XO_YES"); v != "" {
+		return v == "1" || strings.EqualFold(v, "true") || strings.EqualFold(v, "yes")
+	}
+	return false
 }
 
 // NewClient resolves the selected profile and builds an authenticated SDK v2

@@ -188,3 +188,133 @@ func TestLoadRequiresCredentials(t *testing.T) {
 		t.Fatal("expected an error when no credentials are configured")
 	}
 }
+
+func TestListReturnsProfilesAndCurrent(t *testing.T) {
+	isolateConfig(t)
+
+	if _, err := Upsert(Profile{Name: "lab", Endpoint: "https://lab.example.com", Token: "t"}, true); err != nil {
+		t.Fatalf("Upsert lab: %v", err)
+	}
+	if _, err := Upsert(Profile{Name: "ci", Endpoint: "https://ci.example.com", Token: "t"}, false); err != nil {
+		t.Fatalf("Upsert ci: %v", err)
+	}
+
+	current, profiles, err := List()
+	if err != nil {
+		t.Fatalf("List: %v", err)
+	}
+	if current != "lab" {
+		t.Fatalf("current = %q, want lab", current)
+	}
+	if len(profiles) != 2 {
+		t.Fatalf("expected 2 profiles, got %d", len(profiles))
+	}
+}
+
+func TestListEmptyIsNotAnError(t *testing.T) {
+	isolateConfig(t)
+
+	current, profiles, err := List()
+	if err != nil {
+		t.Fatalf("List on empty file: %v", err)
+	}
+	if len(profiles) != 0 {
+		t.Fatalf("expected no profiles, got %d", len(profiles))
+	}
+	if current != DefaultProfile {
+		t.Fatalf("current = %q, want %q", current, DefaultProfile)
+	}
+}
+
+func TestGetProfileReturnsStoredProfile(t *testing.T) {
+	isolateConfig(t)
+
+	if _, err := Upsert(Profile{Name: "lab", Endpoint: "https://lab.example.com", Token: "s3cret", Insecure: true}, true); err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+
+	p, err := GetProfile("lab")
+	if err != nil {
+		t.Fatalf("GetProfile: %v", err)
+	}
+	if p.Endpoint != "https://lab.example.com" || p.Token != "s3cret" || !p.Insecure {
+		t.Fatalf("unexpected profile: %+v", p)
+	}
+}
+
+func TestGetProfileUnknownFails(t *testing.T) {
+	isolateConfig(t)
+
+	if _, err := GetProfile("nope"); err == nil {
+		t.Fatal("expected an error for an unknown profile")
+	}
+}
+
+func TestRemoveDeletesProfile(t *testing.T) {
+	isolateConfig(t)
+
+	if _, err := Upsert(Profile{Name: "lab", Endpoint: "https://lab.example.com", Token: "t"}, true); err != nil {
+		t.Fatalf("Upsert lab: %v", err)
+	}
+	if _, err := Upsert(Profile{Name: "ci", Endpoint: "https://ci.example.com", Token: "t"}, false); err != nil {
+		t.Fatalf("Upsert ci: %v", err)
+	}
+
+	if _, err := Remove("lab"); err != nil {
+		t.Fatalf("Remove: %v", err)
+	}
+	if _, err := GetProfile("lab"); err == nil {
+		t.Fatal("lab should have been removed")
+	}
+	if _, err := GetProfile("ci"); err != nil {
+		t.Fatalf("ci should still exist: %v", err)
+	}
+}
+
+// Removing the current profile moves the current marker to the first
+// remaining profile.
+
+func TestRemoveCurrentFallsBackToFirstRemaining(t *testing.T) {
+	isolateConfig(t)
+
+	if _, err := Upsert(Profile{Name: "lab", Endpoint: "https://lab.example.com", Token: "t"}, true); err != nil {
+		t.Fatalf("Upsert lab: %v", err)
+	}
+	if _, err := Upsert(Profile{Name: "ci", Endpoint: "https://ci.example.com", Token: "t"}, false); err != nil {
+		t.Fatalf("Upsert ci: %v", err)
+	}
+
+	current, err := Remove("lab")
+	if err != nil {
+		t.Fatalf("Remove: %v", err)
+	}
+	if current != "ci" {
+		t.Fatalf("after removing current, current = %q, want ci", current)
+	}
+}
+
+// Removing the last profile resets current to the default profile.
+
+func TestRemoveLastResetsCurrent(t *testing.T) {
+	isolateConfig(t)
+
+	if _, err := Upsert(Profile{Name: "lab", Endpoint: "https://lab.example.com", Token: "t"}, true); err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+
+	current, err := Remove("lab")
+	if err != nil {
+		t.Fatalf("Remove: %v", err)
+	}
+	if current != DefaultProfile {
+		t.Fatalf("after removing the last profile, current = %q, want %q", current, DefaultProfile)
+	}
+}
+
+func TestRemoveUnknownFails(t *testing.T) {
+	isolateConfig(t)
+
+	if _, err := Remove("nope"); err == nil {
+		t.Fatal("expected an error when removing an unknown profile")
+	}
+}

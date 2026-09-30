@@ -101,7 +101,7 @@ func readBody(r *http.Request) (string, error) {
 func isolateVM(t *testing.T, url string) {
 	t.Helper()
 	t.Setenv("XO_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XO_PROFILE", "XO_ENDPOINT", "XO_TOKEN", "XO_USERNAME", "XO_PASSWORD", "XO_INSECURE"} {
+	for _, key := range []string{"XO_PROFILE", "XO_ENDPOINT", "XO_TOKEN", "XO_USERNAME", "XO_PASSWORD", "XO_INSECURE", "XO_YES"} {
 		t.Setenv(key, "")
 	}
 	t.Setenv("XO_ENDPOINT", url)
@@ -281,6 +281,24 @@ func TestVMStopRequiresConfirmation(t *testing.T) {
 	}
 	if _, ok := server.post(); ok {
 		t.Fatal("the action must not be executed without confirmation")
+	}
+}
+
+// $XO_YES is the script counterpart of --yes: it skips the confirmation
+// without a terminal.
+
+func TestVMStopSkipsConfirmationWithEnvYes(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+	t.Setenv("XO_YES", "1")
+
+	if _, err := runVM(t, "vm", "stop", "550e8400-e29b-41d4-a716-446655440001"); err != nil {
+		t.Fatalf("vm stop with XO_YES=1: %v", err)
+	}
+	req, _ := server.post()
+	if req.Path != "/rest/v0/vms/550e8400-e29b-41d4-a716-446655440001/actions/clean_shutdown" {
+		t.Fatalf("unexpected action path: %s", req.Path)
 	}
 }
 

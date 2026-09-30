@@ -83,7 +83,7 @@ Examples:
 		},
 	}
 
-	cmd.Flags().StringVar(&query, flagQuery, "", "JMESPath expression applied to the result, e.g. 'description'")
+	cmd.Flags().StringVarP(&query, flagQuery, "q", "", "JMESPath expression applied to the result, e.g. 'description'")
 	cmd.Flags().BoolVar(&noSecret, flagNoSecret, false, "do not mask the token secret in the output")
 	return cmd
 }

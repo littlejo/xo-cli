@@ -75,7 +75,7 @@ Examples:
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&query, flagQuery, "", "JMESPath expression applied to the result, e.g. '[].name_label'")
+	flags.StringVarP(&query, flagQuery, "q", "", "JMESPath expression applied to the result, e.g. '[].name_label'")
 	flags.IntVar(&limit, flagLimit, 0, "maximum number of SRs to return (0 for no limit)")
 	flags.StringVar(&srType, flagType, "", "filter by SR type (XO live-filter: case-insensitive substring, so 'lvm' also matches 'lvmoiscsi')")
 

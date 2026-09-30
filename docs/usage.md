@@ -70,14 +70,22 @@ then the file's `current` entry, then the `default` profile.
 
 ### `xo configure`
 
-Initialize or update a configuration profile.
+Manage configuration profiles: store or update one, and list, inspect or
+remove the stored profiles.
 
 ```sh
+# Store or update the profile selected with --profile
 xo configure                                   # interactive, default profile
 xo configure --profile lab                     # interactive, named profile
 xo configure --profile lab --endpoint https://xo.example.com --token <token>
 xo configure --profile lab --username admin --password <secret>
-xo configure --profile lab --insecure          # skip TLS verification
+xo configure --profile lab -k                  # skip TLS verification (--insecure)
+
+# Inspect and manage the stored profiles
+xo configure list                              # all profiles (secrets masked)
+xo configure list --output json
+xo configure show lab                          # one profile, full secrets
+xo configure remove lab                        # destructive: asks unless --yes
 ```
 
 Values given with flags win over environment variables; unset values fall back
@@ -97,9 +105,13 @@ time:
 | `XO_USERNAME`    | Username (alternative to a token)         |
 | `XO_PASSWORD`    | Password (alternative to a token)         |
 | `XO_INSECURE`    | Skip TLS certificate verification         |
+| `XO_YES`         | Skip confirmation prompts (like `--yes`)  |
 | `XO_CONFIG_FILE` | Location of the configuration file        |
 
 Either a token, or a username + password, must be available to authenticate.
+
+`XO_YES` is meant for scripts and CI: `XO_YES=1 xo vm stop <id>` behaves like
+`xo vm stop <id> --yes` without having to pass the flag everywhere.
 
 ### Insecure mode
 
@@ -118,14 +130,14 @@ insecure mode is not enabled, the error points at this escape hatch.
 
 ### Global flags
 
-| Flag            | Description                                             |
-| --------------- | ------------------------------------------------------- |
-| `--profile`     | Configuration profile to use (or `$XO_PROFILE`)         |
-| `-o`, `--output`| Output format: `table` (default), `json`, `yaml`, `text`|
-| `--version`     | Print the CLI version and exit                          |
+| Flag             | Description                                             |
+| ---------------- | ------------------------------------------------------- |
+| `-p`, `--profile`| Configuration profile to use (or `$XO_PROFILE`)         |
+| `-o`, `--output` | Output format: `table` (default), `json`, `yaml`, `text`|
+| `--version`      | Print the CLI version and exit                          |
 
-Every command also accepts `--help`; commands that return data accept
-`--query` (see [Output & querying](#output--querying)).
+Commands that return data also accept `--query` / `-q`
+(see [Output & querying](#output--querying)). Every command accepts `--help`.
 
 ### Shell completion
 
@@ -189,9 +201,9 @@ xo vm snapshot <id> --name backup   # label the snapshot
 
 `--memory` accepts bytes or human-readable sizes (`2G`, `512M`).
 
-Destructive operations (`stop`) require confirmation; pass `--yes` to run
-non-interactively. Without `--yes`, a non-terminal stdin is rejected rather
-than hanging, so automation never blocks.
+Destructive operations (`stop`) require confirmation; pass `--yes` (or set
+`XO_YES`) to run non-interactively. Without either, a non-terminal stdin is
+rejected rather than hanging, so automation never blocks.
 
 ### `xo host`
 
@@ -327,7 +339,7 @@ xo rest get vdis -i                             # status line + headers on stder
 ```
 
 Flags: `--data/-d` (JSON body, `-` = stdin), `--param KEY=VALUE` (repeatable),
-`--header KEY: VALUE` (repeatable), `--query`, `--yes`, `--include/-i`.
+`--header KEY: VALUE` (repeatable), `--query/-q`, `--yes`, `--include/-i`.
 
 More resources and sub-commands (`get`, `start`, `stop`, …) are added on top of
 the SDK as it evolves. See `xo <resource> --help` for the current surface.

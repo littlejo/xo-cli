@@ -7,15 +7,14 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/services/library"
+
+	"github.com/littlejo/xo-gocli/internal/cli"
 )
 
 const flagHard = "hard"
 
 func newStopCommand() *cobra.Command {
-	var (
-		hard bool
-		yes  bool
-	)
+	var hard bool
 
 	cmd := &cobra.Command{
 		Use:   "stop <id>",
@@ -42,7 +41,7 @@ Examples:
 				verb:        verb,
 				id:          args[0],
 				destructive: true,
-				yes:         yes,
+				yes:         cli.SkipConfirm(cmd),
 				perform: func(ctx context.Context, xo library.Library, id uuid.UUID) (string, error) {
 					if hard {
 						return xo.VM().HardShutdown(ctx, id)
@@ -54,6 +53,8 @@ Examples:
 	}
 
 	cmd.Flags().BoolVar(&hard, flagHard, false, "power off the VM immediately instead of a clean shutdown")
-	cmd.Flags().BoolVar(&yes, flagYes, false, "do not ask for confirmation")
+	// --yes (or $XO_YES) skips the confirmation; it is read via
+	// cli.SkipConfirm, which sees both the flag and the environment variable.
+	cmd.Flags().Bool(flagYes, false, "do not ask for confirmation (or set XO_YES=1)")
 	return cmd
 }

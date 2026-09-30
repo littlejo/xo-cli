@@ -63,7 +63,7 @@ Examples:
 		},
 	}
 
-	cmd.Flags().StringVar(&query, flagQuery, "", "JMESPath expression applied to the result, e.g. 'result'")
+	cmd.Flags().StringVarP(&query, flagQuery, "q", "", "JMESPath expression applied to the result, e.g. 'result'")
 	return cmd
 }
 
