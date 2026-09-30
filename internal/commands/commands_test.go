@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/littlejo/xo-gocli/internal/cli"
@@ -18,5 +20,22 @@ func TestRootOutputShorthand(t *testing.T) {
 	}
 	if f.Shorthand != "o" {
 		t.Fatalf("--%s shorthand = %q, want %q", cli.FlagOutput, f.Shorthand, "o")
+	}
+}
+
+// TestVersionCommand pins that 'xo version' exists and prints the same line
+// as '--version', offline (no profile or connection needed).
+func TestVersionCommand(t *testing.T) {
+	root := NewRoot()
+	var out bytes.Buffer
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"version"})
+	if err := root.Execute(); err != nil {
+		t.Fatalf("xo version: %v", err)
+	}
+	want := "xo version " + cli.Version
+	if got := strings.TrimSpace(out.String()); got != want {
+		t.Fatalf("xo version = %q, want %q", got, want)
 	}
 }

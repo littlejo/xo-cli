@@ -34,6 +34,7 @@ Configure a profile first with 'xo configure'.`,
 	root.PersistentFlags().StringP(cli.FlagOutput, "o", "table", "output format: table, json, yaml, text")
 
 	root.AddCommand(configure.NewCommand())
+	root.AddCommand(newVersionCommand())
 	root.AddCommand(host.NewCommand())
 	root.AddCommand(network.NewCommand())
 	root.AddCommand(pool.NewCommand())

@@ -13,6 +13,7 @@ quickstart, see the [README](../README.md).
   - [Insecure mode](#insecure-mode)
 - [Commands](#commands)
   - [Global flags](#global-flags)
+  - [`xo version`](#xo-version)
   - [Shell completion](#shell-completion)
   - [`xo vm`](#xo-vm)
   - [`xo host`](#xo-host)
@@ -138,6 +139,17 @@ insecure mode is not enabled, the error points at this escape hatch.
 
 Commands that return data also accept `--query` / `-q`
 (see [Output & querying](#output--querying)). Every command accepts `--help`.
+
+### `xo version`
+
+Print the CLI version, offline:
+
+```sh
+xo version          # or: xo --version, xo -v
+```
+
+The Xen Orchestra server version is not shown: the REST API does not expose
+it (only the legacy JSON-RPC API does, which this CLI never uses).
 
 ### Shell completion
 
