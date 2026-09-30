@@ -4,6 +4,27 @@ This page is the detailed reference: installation, configuration, every
 command, and the output/querying model. For the overview and a five-minute
 quickstart, see the [README](../README.md).
 
+## Table of contents
+
+- [Installation](#installation)
+- [Configuration](#configuration)
+  - [`xo configure`](#xo-configure)
+  - [Environment variables](#environment-variables)
+  - [Insecure mode](#insecure-mode)
+- [Commands](#commands)
+  - [Global flags](#global-flags)
+  - [Shell completion](#shell-completion)
+  - [`xo vm`](#xo-vm)
+  - [`xo host`](#xo-host)
+  - [`xo sr`](#xo-sr)
+  - [`xo pool`](#xo-pool)
+  - [`xo network`](#xo-network)
+  - [`xo task`](#xo-task)
+  - [`xo token`](#xo-token)
+  - [`xo template`](#xo-template)
+  - [`xo rest`](#xo-rest)
+- [Output & querying](#output--querying)
+
 ## Installation
 
 ### Install script

@@ -5,6 +5,32 @@ and local development — see [AGENTS.md](../AGENTS.md) for the architecture
 rules and conventions (the important one: `xenorchestra-go-sdk/v2` is the only
 Xen Orchestra API layer).
 
+## Table of contents
+
+- [Architecture](#architecture)
+- [Toolchain](#toolchain)
+- [Testing](#testing)
+  - [Functional tests against the simulator](#functional-tests-against-the-simulator)
+- [CI / Release](#ci--release)
+- [Versioning](#versioning)
+- [Repository layout](#repository-layout)
+- [SDK v2: what we build on](#sdk-v2-what-we-build-on)
+  - [Module layout](#module-layout)
+  - [Two entry points](#two-entry-points)
+  - [Authentication & transport](#authentication--transport)
+  - [Request model (as the SDK sends it)](#request-model-as-the-sdk-sends-it)
+  - [Known SDK gaps the CLI works around](#known-sdk-gaps-the-cli-works-around)
+  - [Which command uses which SDK surface](#which-command-uses-which-sdk-surface)
+- [Roadmap](#roadmap)
+  - [Done](#done)
+  - [Layer 1 — already in the SDK, not exposed by the CLI yet](#layer-1--already-in-the-sdk-not-exposed-by-the-cli-yet)
+  - [Layer 2 — complete SDK services, no CLI resource yet](#layer-2--complete-sdk-services-no-cli-resource-yet)
+  - [Layer 3 — in the REST API, not in the SDK yet](#layer-3--in-the-rest-api-not-in-the-sdk-yet)
+  - [Layer 4 — not in the SDK at all](#layer-4--not-in-the-sdk-at-all)
+  - [CLI-side polish (no SDK dependency)](#cli-side-polish-no-sdk-dependency)
+  - [SDK bug to verify upstream](#sdk-bug-to-verify-upstream)
+- [License](#license)
+
 ## Architecture
 
 `xo` is a thin UX layer over the official Go SDK
