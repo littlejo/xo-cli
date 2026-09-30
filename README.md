@@ -46,6 +46,9 @@ export XO_PROFILE=lab
 xo vm list
 ```
 
+The active profile is resolved in this order: `--profile`, then `$XO_PROFILE`,
+then the file's `current` entry, then the `default` profile.
+
 ## Features
 
 - Resource-oriented commands (`xo vm list`, `xo host list`, `xo template list`, `xo sr list`, `xo pool list`, …)
@@ -278,7 +281,7 @@ xo host get <id>
 
 ```sh
 xo sr list
-xo sr list --type lvm               # filter by SR type (lvm, nfs, ext, iso, …)
+xo sr list --type lvm               # filter by SR type (case-insensitive substring: 'lvm' also matches 'lvmoiscsi')
 xo sr list --query '[?SR_type==`nfs`].name_label'
 xo sr get <id>
 ```
@@ -431,7 +434,8 @@ XO_TEST_URL=http://localhost:3001 XO_TEST_TOKEN=test-token go test -tags=integra
 ### CI / Release
 
 - **CI** (`.github/workflows/ci.yml`): runs on push to `main` and on every PR —
-  `gofmt`, `go vet`, `golangci-lint`, unit + integration tests, build. A second
+  `gofmt`, `go vet`, `golangci-lint`, unit + integration tests (including a
+  `-race` pass to catch data races early), build. A second
   `functional` job spins up the xo-api-sim REST simulator (pinned commit,
   cookie-auth patch) and runs the integration suite against it, so every push is
   tested end-to-end over real HTTP without a live instance.

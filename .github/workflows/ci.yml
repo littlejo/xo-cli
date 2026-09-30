@@ -39,6 +39,12 @@ jobs:
       - name: Test
         run: go test ./...
 
+      # Data races are a classic source of flaky field reports; the race
+      # detector is cheap enough to run on every push (ubuntu-latest ships a
+      # C toolchain, which -race requires).
+      - name: Test (race)
+        run: go test -race ./...
+
       - name: Test (integration, skipped when not configured)
         run: go test -tags=integration ./...
 

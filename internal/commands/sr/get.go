@@ -45,14 +45,14 @@ Examples:
 				return err
 			}
 
-			xo, _, err := newClient(cmd)
+			xo, cfg, err := newClient(cmd)
 			if err != nil {
 				return err
 			}
 
 			sr, err := xo.SR().Get(cmd.Context(), id)
 			if err != nil {
-				return notFound(args[0], err)
+				return notFound(args[0], err, cfg.Insecure)
 			}
 
 			return renderSR(cmd.OutOrStdout(), format, sr, query)
@@ -87,13 +87,15 @@ func newClient(cmd *cobra.Command) (library.Library, *config.ClientConfig, error
 	return xo, cfg, nil
 }
 
-// notFound turns a lookup failure into the concise "SR not found" form when
-// the API returned a 404, and keeps the original error otherwise.
-func notFound(id string, err error) error {
+// notFound turns a lookup failure into the concise "SR not found" form when the
+// API returned a 404, and keeps the original error otherwise. It passes the
+// profile's insecure state through so the TLS hint is only suggested when it
+// would actually help.
+func notFound(id string, err error, insecure bool) error {
 	if err != nil && strings.Contains(err.Error(), "404") {
 		return fmt.Errorf("SR %q not found", id)
 	}
-	return cli.InsecureHint(fmt.Sprintf("cannot get SR %q: %v", id, err), false)
+	return cli.InsecureHint(fmt.Sprintf("cannot get SR %q: %v", id, err), insecure)
 }
 
 // renderSR renders a single SR in the requested format. The human format uses

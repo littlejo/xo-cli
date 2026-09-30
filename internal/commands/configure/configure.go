@@ -44,6 +44,9 @@ Examples:
 			interactive := isTerminal(in)
 
 			if endpoint == "" {
+				endpoint = os.Getenv(config.EnvEndpoint)
+			}
+			if endpoint == "" {
 				var err error
 				if endpoint, err = prompt(in, out, "endpoint", interactive); err != nil {
 					return err

@@ -40,14 +40,14 @@ Examples:
 				return err
 			}
 
-			xo, _, err := newClient(cmd)
+			xo, cfg, err := newClient(cmd)
 			if err != nil {
 				return err
 			}
 
 			vm, err := xo.VM().GetByID(cmd.Context(), id)
 			if err != nil {
-				return notFound(args[0], err)
+				return notFound(args[0], err, cfg.Insecure)
 			}
 
 			return renderVM(cmd.OutOrStdout(), format, vm, query)

@@ -44,14 +44,14 @@ Examples:
 				return err
 			}
 
-			xo, _, err := newClient(cmd)
+			xo, cfg, err := newClient(cmd)
 			if err != nil {
 				return err
 			}
 
 			network, err := xo.Network().Get(cmd.Context(), id)
 			if err != nil {
-				return notFound(args[0], err)
+				return notFound(args[0], err, cfg.Insecure)
 			}
 
 			return renderNetwork(cmd.OutOrStdout(), format, network, query)
@@ -87,12 +87,14 @@ func newClient(cmd *cobra.Command) (library.Library, *config.ClientConfig, error
 }
 
 // notFound turns a lookup failure into the concise "network not found" form
-// when the API returned a 404, and keeps the original error otherwise.
-func notFound(id string, err error) error {
+// when the API returned a 404, and keeps the original error otherwise. It
+// passes the profile's insecure state through so the TLS hint is only
+// suggested when it would actually help.
+func notFound(id string, err error, insecure bool) error {
 	if err != nil && strings.Contains(err.Error(), "404") {
 		return fmt.Errorf("network %q not found", id)
 	}
-	return cli.InsecureHint(fmt.Sprintf("cannot get network %q: %v", id, err), false)
+	return cli.InsecureHint(fmt.Sprintf("cannot get network %q: %v", id, err), insecure)
 }
 
 // renderNetwork renders a single network in the requested format. The human

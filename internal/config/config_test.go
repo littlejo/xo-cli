@@ -120,6 +120,66 @@ func TestProfileFromEnvironment(t *testing.T) {
 	}
 }
 
+// The file's current profile is the fallback used when neither --profile nor
+// $XO_PROFILE selects one (AWS CLI style), after the default profile is not a
+// valid fallback when a current marker exists.
+
+func TestCurrentProfileFromFile(t *testing.T) {
+	isolateConfig(t)
+
+	// "default" is never configured here; "lab" is the current profile.
+	if _, err := Upsert(Profile{Name: "lab", Endpoint: "https://lab.example.com", Token: "t"}, true); err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Name != "lab" || cfg.Endpoint != "https://lab.example.com" {
+		t.Fatalf("current profile from file was not used: %+v", cfg)
+	}
+}
+
+func TestExplicitProfileWinsOverCurrent(t *testing.T) {
+	isolateConfig(t)
+
+	if _, err := Upsert(Profile{Name: "lab", Endpoint: "https://lab.example.com", Token: "t"}, true); err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+	if _, err := Upsert(Profile{Name: "other", Endpoint: "https://other.example.com", Token: "t"}, false); err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+
+	cfg, err := Load("other")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Name != "other" || cfg.Endpoint != "https://other.example.com" {
+		t.Fatalf("explicit profile must win over the current marker: %+v", cfg)
+	}
+}
+
+func TestEnvProfileWinsOverCurrent(t *testing.T) {
+	isolateConfig(t)
+
+	if _, err := Upsert(Profile{Name: "lab", Endpoint: "https://lab.example.com", Token: "t"}, true); err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+	if _, err := Upsert(Profile{Name: "ci", Endpoint: "https://ci.example.com", Token: "t"}, false); err != nil {
+		t.Fatalf("Upsert: %v", err)
+	}
+	t.Setenv(EnvProfile, "ci")
+
+	cfg, err := Load("")
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if cfg.Name != "ci" {
+		t.Fatalf("$XO_PROFILE must win over the current marker: %+v", cfg)
+	}
+}
+
 func TestLoadRequiresCredentials(t *testing.T) {
 	isolateConfig(t)
 
