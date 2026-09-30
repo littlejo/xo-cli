@@ -195,6 +195,9 @@ When upgrading the SDK:
 3. inspect API changes
 4. verify CLI behavior
 5. update the CLI only where required
+6. update the "SDK v2: what we build on" section in `docs/development.md`
+   so it reflects the new module layout, entry points, request model and
+   known gaps
 
 Avoid vendoring the SDK unless there is a specific reason.
 
