@@ -7,7 +7,7 @@ WebSocket + a raw REST wrapper), described upstream as a *debug and power-user
 tool*. This Go CLI is a typed, REST-only client with an AWS-CLI-like UX.
 
 The comparison is split by audience: day-to-day interactive use first, then
-automation and development, followed by a capability checklist.
+automation and development, and finally the few remaining coverage gaps.
 
 ## For the user
 
@@ -18,7 +18,7 @@ How each tool feels when driven by hand:
 | Command model        | Dynamic: `xo-cli <method> <param>=<value>` for **every** server method, discovered at runtime (`list-commands`) | Static, resource-oriented: `xo <resource> <operation>`, discovered via `--help`                        |
 | Configuration        | Single registered instance (`xo-cli register` / `unregister`), token stored only, `--url` per-invocation override | Multiple named profiles (`xo configure --profile`), `$XO_PROFILE` / `XO_*` env vars, 0600 config file  |
 | Authentication       | username/password, token, OTP (`--otp`), token validity control (`--expiresIn`) | username/password or token (via SDK v2)                                                                 |
-| Object listing       | `list-objects` on all object types, with property filters                       | Typed `list` per resource (`vm`, `host`, `pool`, `sr`, `network`, `task`, `template`) with `--limit` and resource filters (`--power-state`, `--type`, `--status`) |
+| Object listing       | `list-objects` on all object types, with property filters; a single object needs `rest get vms/<id>` | Typed `list` per resource (`vm`, `host`, `pool`, `sr`, `network`, `task`, `template`) with `--limit` and resource filters (`--power-state`, `--type`, `--status`); single object via `xo <resource> get <id>` |
 | Output formats       | Plain text or `--json`                                                          | `table` (default), `json`, `yaml`, `text`                                                               |
 | Filtering / projection | `filter=` / `fields=` parameters (XO filter syntax)                           | AWS-CLI-like `--query` with JMESPath (incl. backtick literals)                                          |
 | Task management      | `rest get tasks/<id> wait[=result]`, `rest post tasks/<id>/actions/abort`       | `task list` / `task get` (list filterable by `--status`); lifecycle actions return the task id          |
@@ -44,28 +44,15 @@ Automation, CI pipelines, and building on top of the CLI:
 | Credentials in CI | Token stored by `register`                                            | `XO_ENDPOINT` / `XO_TOKEN` / … env vars override the profile per invocation — no config file to write or leak |
 | Testing the CLI itself | Upstream tests only                                        | Unit tests (httptest fixtures) + opt-in integration tests against a live XO + a functional suite against the REST simulator, all in CI |
 
-## Feature coverage
+## Remaining coverage gaps
 
-| Capability                                        | `xo-cli` | `xo` Go CLI |
-| ------------------------------------------------- | -------- | ----------- |
-| List VMs / hosts / pools / SRs / networks / tasks | ✅ (via `list-objects`) | ✅ |
-| List VM templates                                 | ✅ (`list-objects type=VM-template`) | ✅ (`xo template list`) |
-| Get a single object                               | ✅ (`rest get vms/<id>`) | ✅ (`xo <resource> get <id>`) |
-| Start / stop / reboot a VM                        | ✅ | ✅ |
-| Create a VM (from a template)                     | ✅ | ✅ (`xo vm create`) |
-| Update a VM (name, description)                   | ✅ | ✅ (`xo vm update`) |
-| Manage VM tags                                    | ✅ | ✅ (`xo vm tag add/remove`) |
-| Pause / resume / suspend / delete a VM            | ✅ | ⬜ (in SDK v2, not yet exposed) |
-| Snapshot a VM                                     | ✅ | ✅ |
-| Import / export VM (XVA)                          | ✅ | ⬜ |
-| Manage tokens                                     | ✅ (`create-token`) | ✅ (`token list/get/create`, masking) |
-| Watch notifications in real time                  | ✅ | ⬜ |
-| Raw REST access (any endpoint)                    | ✅ | ✅ (`xo rest`) |
-| Call any other server method (server, users, groups, backups, VDI, VBD, PBD, …) | ✅ | ⬜ (added resource by resource on top of the SDK) |
-| Multiple instances / profiles                     | ⬜ (single registered instance) | ✅ |
-| Human-friendly tables                             | ⬜ | ✅ |
-| JMESPath querying                                 | ⬜ | ✅ |
-| Static binary, no Node.js                         | ⬜ | ✅ |
+Everything above covers both tools; the rows below are the capabilities where
+they diverge and that no other section states:
+
+| Gap                                                                                     | `xo-cli` | `xo` Go CLI |
+| --------------------------------------------------------------------------------------- | -------- | ----------- |
+| Call *any* server method (servers, users, groups, backups, VDI, VBD, PBD, …)             | ✅        | ⬜ (added resource by resource on top of the SDK) |
+| Pause / resume / suspend / delete a VM                                                  | ✅        | ⬜ (in SDK v2, not yet exposed)                  |
 
 Legend: ✅ available — ⬜ not available.
 
