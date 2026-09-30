@@ -59,6 +59,8 @@ then the file's `current` entry, then the `default` profile.
 
 ### `xo configure`
 
+Initialize or update a configuration profile.
+
 ```sh
 xo configure                                   # interactive, default profile
 xo configure --profile lab                     # interactive, named profile
@@ -115,6 +117,8 @@ Every command also accepts `--help`; commands that return data accept
 
 ### `xo vm`
 
+Manage virtual machines.
+
 ```sh
 # Read
 xo vm list                          # all VMs
@@ -158,6 +162,8 @@ than hanging, so automation never blocks.
 
 ### `xo host`
 
+Manage hosts.
+
 ```sh
 xo host list
 xo host list --query '[].name_label'
@@ -166,6 +172,8 @@ xo host get <id>
 ```
 
 ### `xo sr`
+
+Manage storage repositories.
 
 ```sh
 xo sr list
@@ -180,6 +188,8 @@ project with `--query` instead.
 
 ### `xo pool`
 
+Manage pools.
+
 ```sh
 xo pool list
 xo pool list --query '[?HA_enabled].name_label'
@@ -188,6 +198,8 @@ xo pool get <id>
 
 ### `xo network`
 
+Manage networks.
+
 ```sh
 xo network list
 xo network list --query '[].name_label'
@@ -195,6 +207,8 @@ xo network get <id>                 # one network (table/json/yaml)
 ```
 
 ### `xo task`
+
+Manage asynchronous tasks.
 
 ```sh
 xo task list                        # all asynchronous tasks
@@ -208,9 +222,11 @@ it with `xo task get <id>`.
 
 ### `xo token`
 
-Manage the authentication tokens of the current user (the same value `xo
-configure` stores). The token **id is the secret**, so it is masked in the
-output by default — pass `--no-secret` to reveal it (use with care).
+Manage authentication tokens.
+
+These are the tokens of the current user (the same value `xo configure`
+stores). The token **id is the secret**, so it is masked in the output by
+default — pass `--no-secret` to reveal it (use with care).
 
 ```sh
 xo token list                         # your tokens (id masked)
@@ -227,6 +243,8 @@ the REST API and is therefore not implemented here.
 
 ### `xo template`
 
+Manage VM templates.
+
 In Xen Orchestra, templates are first-class objects (REST resource
 `vm-templates`), not part of the `vms` collection — so `xo vm list` does not
 show them. `xo template list` reads that dedicated resource.
@@ -239,6 +257,8 @@ xo template get <id>            # one template (table/json/yaml)
 ```
 
 ### `xo rest`
+
+Call a raw Xen Orchestra REST endpoint.
 
 Low-level escape hatch for Xen Orchestra REST endpoints that have no typed
 command yet. Use it for what the typed commands don't cover — VDI/VBD
