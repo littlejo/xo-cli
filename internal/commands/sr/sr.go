@@ -15,5 +15,6 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newScanCommand())
 	cmd.AddCommand(newReclaimSpaceCommand())
+	cmd.AddCommand(newTagCommand())
 	return cmd
 }

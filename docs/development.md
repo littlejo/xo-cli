@@ -229,7 +229,9 @@ v1.19.0 version number is the *module* version, not the REST API version
   `snapshot`.
 - Delete: `DELETE /<resource>/<id>` → `{"success": true}` (synchronous, no
   task id); e.g. `DELETE /vms/<id>`.
-- Tags: `PUT`/`DELETE /vms/<id>/tags/<tag>`.
+- Tags: `PUT`/`DELETE /<resource>/<id>/tags/<tag>` (`vms`, `hosts`,
+  `pools`, `srs`, `networks`), via the typed `AddTag` / `RemoveTag` of the
+  `Taggable` services.
 - Partial update: `PATCH /<resource>/<id>` with **camelCase** JSON fields
   (`nameLabel`, `nameDescription`, …) — responses, in contrast, use
   snake_case.
@@ -256,7 +258,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 | `vm list/get/create/start/stop/reboot/pause/unpause/suspend/resume/snapshot/delete/tag` | typed `library.VM` |
 | `vm vdis` | typed `library.VM` (`GetVDIs`) |
 | `vm export/import` | raw `*client.Client` (XVA/OVA streaming — SDK gap) |
-| `host/pool/sr/network list/get` | typed `library.{Host,Pool,SR,Network}` |
+| `host/pool/sr/network list/get/tag` | typed `library.{Host,Pool,SR,Network}` (`AddTag` / `RemoveTag`) |
 | `sr scan/reclaim-space` | typed `library.SR` (`Scan` / `ReclaimSpace`) |
 | `vm update` | raw `*client.Client` (PATCH — SDK gap) |
 | `template list/get`, `task list/get` | raw `client.TypedGet` |
@@ -273,6 +275,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 - `vm vdis` (per-VM VDI listing)
 - `sr scan` / `sr reclaim-space` (SR maintenance actions)
 - VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete`, `export`/`import` (XVA/OVA), `update`, `tag add/remove`
+- `tag add/remove` on `host`, `pool`, `sr` and `network` (any taggable resource, not just VMs)
 - `xo rest` raw REST escape hatch on top of the SDK v2 HTTP facilities
 
 The remainder is organized in four layers. The deeper a layer, the more it

@@ -247,6 +247,10 @@ xo host list
 xo host list --query '[].name_label'
 xo host list --query '[?power_state==`Running`].name_label'
 xo host get <id>
+
+# Tags
+xo host tag add <id> production
+xo host tag remove <id> production
 ```
 
 ### `xo sr`
@@ -260,6 +264,10 @@ xo sr list --query '[?SR_type==`nfs`].name_label'
 xo sr get <id>
 xo sr scan <id>                     # rescan the SR for disk changes
 xo sr reclaim-space <id>            # reclaim unused (thin) space
+
+# Tags
+xo sr tag add <id> production
+xo sr tag remove <id> production
 ```
 
 `--type` is passed to the XO live-filter engine, which is a case-insensitive
@@ -274,6 +282,10 @@ Manage pools.
 xo pool list
 xo pool list --query '[?HA_enabled].name_label'
 xo pool get <id>
+
+# Tags
+xo pool tag add <id> production
+xo pool tag remove <id> production
 ```
 
 ### `xo network`
@@ -284,6 +296,10 @@ Manage networks.
 xo network list
 xo network list --query '[].name_label'
 xo network get <id>                 # one network (table/json/yaml)
+
+# Tags
+xo network tag add <id> production
+xo network tag remove <id> production
 ```
 
 ### `xo task`
