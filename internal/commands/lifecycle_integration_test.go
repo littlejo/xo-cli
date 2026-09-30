@@ -138,6 +138,25 @@ func TestIntegrationVMLifecycle(t *testing.T) {
 		t.Fatalf("vm list --query did not return the created VM: got %v, want %s among them", ids, vmID)
 	}
 
+	// 3b. The same data must render in the human formats (default table and
+	// --output text). These use the generic list renderers, and a regression
+	// there used to print nothing for list results — the JSON assertion above
+	// would not have caught it.
+	tableOut, err := run("vm", "list")
+	if err != nil {
+		t.Fatalf("xo vm list (table): %v\n%s", err, tableOut)
+	}
+	if !strings.Contains(tableOut, name) {
+		t.Fatalf("table output should show the created VM %q:\n%s", name, tableOut)
+	}
+	textOut, err := run("vm", "list", "--output", "text")
+	if err != nil {
+		t.Fatalf("xo vm list (text): %v\n%s", err, textOut)
+	}
+	if !strings.Contains(textOut, name) {
+		t.Fatalf("text output should show the created VM %q:\n%s", name, textOut)
+	}
+
 	// 4. Start the VM; the state must be reflected on re-read.
 	startOut, err := run("vm", "start", vmID)
 	if err != nil {
@@ -156,6 +175,15 @@ func TestIntegrationVMLifecycle(t *testing.T) {
 	}
 	if state != "Running" {
 		t.Fatalf("power_state after start = %q, want Running", state)
+	}
+
+	// The single-object view must also render in the human formats.
+	getOut, err := run("vm", "get", vmID)
+	if err != nil {
+		t.Fatalf("xo vm get (table): %v\n%s", err, getOut)
+	}
+	if !strings.Contains(getOut, name) {
+		t.Fatalf("vm get table output should show the VM name %q:\n%s", name, getOut)
 	}
 
 	// 5. Stop is destructive: without --yes and without a terminal it must
