@@ -121,7 +121,7 @@ insecure mode is not enabled, the error points at this escape hatch.
 | Flag            | Description                                             |
 | --------------- | ------------------------------------------------------- |
 | `--profile`     | Configuration profile to use (or `$XO_PROFILE`)         |
-| `--output`      | Output format: `table` (default), `json`, `yaml`, `text`|
+| `-o`, `--output`| Output format: `table` (default), `json`, `yaml`, `text`|
 | `--version`     | Print the CLI version and exit                          |
 
 Every command also accepts `--help`; commands that return data accept

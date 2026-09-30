@@ -31,7 +31,7 @@ Configure a profile first with 'xo configure'.`,
 		SilenceErrors: true,
 	}
 	root.PersistentFlags().String(cli.FlagProfile, "", "name of the configuration profile to use (or $XO_PROFILE)")
-	root.PersistentFlags().String(cli.FlagOutput, "table", "output format: table, json, yaml, text")
+	root.PersistentFlags().StringP(cli.FlagOutput, "o", "table", "output format: table, json, yaml, text")
 
 	root.AddCommand(configure.NewCommand())
 	root.AddCommand(host.NewCommand())
