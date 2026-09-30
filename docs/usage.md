@@ -258,6 +258,8 @@ xo sr list
 xo sr list --type lvm               # filter by SR type (see note below)
 xo sr list --query '[?SR_type==`nfs`].name_label'
 xo sr get <id>
+xo sr scan <id>                     # rescan the SR for disk changes
+xo sr reclaim-space <id>            # reclaim unused (thin) space
 ```
 
 `--type` is passed to the XO live-filter engine, which is a case-insensitive

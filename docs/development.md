@@ -257,6 +257,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 | `vm vdis` | typed `library.VM` (`GetVDIs`) |
 | `vm export/import` | raw `*client.Client` (XVA/OVA streaming — SDK gap) |
 | `host/pool/sr/network list/get` | typed `library.{Host,Pool,SR,Network}` |
+| `sr scan/reclaim-space` | typed `library.SR` (`Scan` / `ReclaimSpace`) |
 | `vm update` | raw `*client.Client` (PATCH — SDK gap) |
 | `template list/get`, `task list/get` | raw `client.TypedGet` |
 | `token list/get/create` | raw `*client.Client` (GET/POST, 307 redirect) |
@@ -270,6 +271,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 - `xo configure` + named profiles (with environment overrides)
 - `list` / `get` for `vm`, `host`, `pool`, `sr`, `network`, `task`, `template`, `token`
 - `vm vdis` (per-VM VDI listing)
+- `sr scan` / `sr reclaim-space` (SR maintenance actions)
 - VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete`, `export`/`import` (XVA/OVA), `update`, `tag add/remove`
 - `xo rest` raw REST escape hatch on top of the SDK v2 HTTP facilities
 
@@ -287,7 +289,6 @@ service method (the same pattern as the current commands):
 | `xo task wait <id>` (+ `--timeout`) | `Task().Wait` / `WaitWithTimeout` (2 s polling, context-aware) |
 | `xo task abort <id>` | `Task().Abort` |
 | `--wait` on async actions (`vm start`, …) | `Task().HandleTaskResponse(ctx, resp, true)` |
-| `xo sr scan <id>` / `xo sr reclaim-space <id>` | `SR().Scan / ReclaimSpace` |
 | `xo host / pool / sr / network tag add\|remove` | `Taggable`, implemented by all four services (tag endpoints `PUT`/`DELETE /<resource>/<id>/tags/<tag>`) |
 | `xo network create / create-internal / create-bonded / delete` | `Network().Create* / Delete` (aliases of the `Pool` actions) |
 | `xo pool rolling-update / rolling-reboot / emergency-shutdown` | `PoolAction` |
