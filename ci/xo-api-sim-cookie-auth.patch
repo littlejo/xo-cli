@@ -1,0 +1,53 @@
+# Why this patch exists
+#
+# The xo-gocli CLI authenticates exclusively through the SDK v2 client
+# (github.com/vatesfr/xenorchestra-go-sdk/v2). That client attaches the
+# credential as an `authenticationToken` **cookie** on every request
+# (v2/client/client.go, doRequest) and never sends an `Authorization` header.
+#
+# xo-api-sim, however, guards /rest/v0 with middleware that only reads the
+# `Authorization: Bearer <token>` **header** (src/server.ts). As a result the
+# CLI is answered 401 {"error":"Missing Authorization header"} and no functional
+# test can run against the simulator as released.
+#
+# This patch makes the simulator accept *either* the Bearer header or the SDK
+# v2 authenticationToken cookie. It is applied in CI (the 'functional' job)
+# against a pinned commit of the public GitHub mirror, so the suite needs no
+# credentials and no live Xen Orchestra instance.
+#
+# It is a known gap in xo-api-sim; the change should be contributed upstream.
+#
+# Applies to: github.com/vatesfr/xo-api-sim @ ee5e2a91521e4b048b1f29b09a6d66e42c76e202
+# File touched: src/server.ts
+diff --git a/src/server.ts b/src/server.ts
+index aca5831..8d4473a 100644
+--- a/src/server.ts
++++ b/src/server.ts
+@@ -14,12 +14,24 @@ export async function startServer(port: number, dataStore: MockDataStore) {
+   // Authentication middleware (protect only API routes)
+   const authToken = process.env.AUTH_TOKEN || "test-token";
+   app.use("/rest/v0", (req, res, next) => {
++    // Accept Bearer header OR the SDK v2 authenticationToken cookie.
++    const cookies = (req.headers.cookie || "").split(";").reduce((acc: Record<string, string>, kv: string) => {
++      const i = kv.indexOf("=");
++      if (i > 0) acc[kv.slice(0, i).trim()] = kv.slice(i + 1).trim();
++      return acc;
++    }, {});
++    const cookieToken = cookies["authenticationToken"];
+     const auth = req.headers.authorization;
+-    if (!auth) {
++    let headerToken = "";
++    if (auth) {
++      const [type, token] = auth.split(" ");
++      if (type === "Bearer") headerToken = token;
++    }
++    const presented = headerToken || cookieToken;
++    if (!presented) {
+       return res.status(401).json({ error: "Missing Authorization header" });
+     }
+-    const [type, token] = auth.split(" ");
+-    if (type !== "Bearer" || token !== authToken) {
++    if (presented !== authToken) {
+       return res.status(401).json({ error: "Invalid token" });
+     }
+     next();

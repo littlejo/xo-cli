@@ -46,6 +46,9 @@ export XO_PROFILE=lab
 xo vm list
 ```
 
+The active profile is resolved in this order: `--profile`, then `$XO_PROFILE`,
+then the file's `current` entry, then the `default` profile.
+
 ## Features
 
 - Resource-oriented commands (`xo vm list`, `xo host list`, `xo template list`, `xo sr list`, `xo pool list`, …)
@@ -278,7 +281,7 @@ xo host get <id>
 
 ```sh
 xo sr list
-xo sr list --type lvm               # filter by SR type (lvm, nfs, ext, iso, …)
+xo sr list --type lvm               # filter by SR type (case-insensitive substring: 'lvm' also matches 'lvmoiscsi')
 xo sr list --query '[?SR_type==`nfs`].name_label'
 xo sr get <id>
 ```
@@ -408,10 +411,34 @@ go test -tags=integration ./...
 Without those variables the integration tests are reported as **skipped**, never
 as passed.
 
+**Functional tests** run the same `-tags=integration` suite against the
+[xo-api-sim](https://github.com/vatesfr/xo-api-sim) REST API simulator, so the
+CLI is exercised end-to-end with real HTTP requests but without a live Xen
+Orchestra instance or any credential. In CI this is the `functional` job;
+locally you can point the suite at a simulator you run yourself:
+
+```sh
+# terminal 1: start the simulator (see the xo-api-sim repo)
+npm ci && npm run build
+PORT=3001 AUTH_TOKEN=test-token node dist/index.js
+
+# terminal 2: run the functional suite against it
+XO_TEST_URL=http://localhost:3001 XO_TEST_TOKEN=test-token go test -tags=integration ./...
+```
+
+> Note: the SDK v2 client authenticates with an `authenticationToken` cookie,
+> while xo-api-sim (as released) only reads the `Authorization: Bearer` header.
+> `ci/xo-api-sim-cookie-auth.patch` closes that gap and is applied in CI; run the
+> simulator from that patched source (or the fix contributed upstream) locally.
+
 ### CI / Release
 
 - **CI** (`.github/workflows/ci.yml`): runs on push to `main` and on every PR —
-  `gofmt`, `go vet`, `golangci-lint`, unit + integration tests, build.
+  `gofmt`, `go vet`, `golangci-lint`, unit + integration tests (including a
+  `-race` pass to catch data races early), build. A second
+  `functional` job spins up the xo-api-sim REST simulator (pinned commit,
+  cookie-auth patch) and runs the integration suite against it, so every push is
+  tested end-to-end over real HTTP without a live instance.
 - **Version** (`.github/workflows/version.yml`): on every push to `main`,
   computes the next semver tag from the conventional-commits history
   (`feat` → minor, anything else → patch), pushes it, and triggers the

@@ -120,3 +120,39 @@ func TestConfigureUsernamePassword(t *testing.T) {
 		t.Fatalf("unexpected stored profile: %+v", cfg)
 	}
 }
+
+// XO_ENDPOINT seeds the endpoint when --endpoint is not given, exactly like
+// XO_TOKEN/XO_USERNAME/XO_PASSWORD seed their fields.
+
+func TestConfigureEndpointFromEnvironment(t *testing.T) {
+	isolate(t)
+	t.Setenv(config.EnvEndpoint, "https://from-env.example.com")
+
+	runConfigure(t, "--token", "secret")
+
+	cfg, err := config.Load(config.DefaultProfile)
+	if err != nil {
+		t.Fatalf("Load after configure: %v", err)
+	}
+	if cfg.Endpoint != "https://from-env.example.com" {
+		t.Fatalf("XO_ENDPOINT was not used as the endpoint: %+v", cfg)
+	}
+}
+
+func TestConfigureEndpointFlagBeatsEnvironment(t *testing.T) {
+	isolate(t)
+	t.Setenv(config.EnvEndpoint, "https://from-env.example.com")
+
+	runConfigure(t, "--endpoint", "https://from-flag.example.com", "--token", "secret")
+
+	// The stored profile must carry the flag value. Load would re-apply the
+	// XO_ENDPOINT runtime override, so clear it before checking the file.
+	t.Setenv(config.EnvEndpoint, "")
+	cfg, err := config.Load(config.DefaultProfile)
+	if err != nil {
+		t.Fatalf("Load after configure: %v", err)
+	}
+	if cfg.Endpoint != "https://from-flag.example.com" {
+		t.Fatalf("--endpoint must win over XO_ENDPOINT when storing: %+v", cfg)
+	}
+}

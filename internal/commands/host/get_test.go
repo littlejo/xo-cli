@@ -165,3 +165,44 @@ func TestHostGetBadID(t *testing.T) {
 		t.Fatal("expected an error for an invalid id")
 	}
 }
+
+// The TLS hint must follow the profile's insecure state end to end, i.e. the
+// value resolved by config.Load (file, flag or environment) must reach the
+// error formatting. A server that answers with an x509-style error lets us
+// observe both sides of the hint through the full command path.
+
+func tlsFailServer() *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		_, _ = fmt.Fprint(w, `{"message":"x509: certificate signed by unknown authority"}`)
+	}))
+}
+
+func TestHostGetTLSErrorHintsWhenInsecureOff(t *testing.T) {
+	server := tlsFailServer()
+	defer server.Close()
+	isolatePointers(t, server.URL)
+
+	_, err := runGet(t, "get", "aaaaaaaa-bbbb-cccc-dddd-000000000001")
+	if err == nil {
+		t.Fatal("expected an error from the failing API")
+	}
+	if !strings.Contains(err.Error(), "--insecure") {
+		t.Fatalf("expected the --insecure hint when insecure is off: %v", err)
+	}
+}
+
+func TestHostGetTLSErrorNoHintWhenInsecureOn(t *testing.T) {
+	server := tlsFailServer()
+	defer server.Close()
+	isolatePointers(t, server.URL)
+	t.Setenv("XO_INSECURE", "1")
+
+	_, err := runGet(t, "get", "aaaaaaaa-bbbb-cccc-dddd-000000000001")
+	if err == nil {
+		t.Fatal("expected an error from the failing API")
+	}
+	if strings.Contains(err.Error(), "--insecure") {
+		t.Fatalf("no hint expected when XO_INSECURE=1: %v", err)
+	}
+}

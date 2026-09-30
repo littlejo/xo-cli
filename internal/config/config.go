@@ -58,18 +58,25 @@ type ClientConfig struct {
 }
 
 // Load reads the configuration file, applies environment overrides and
-// returns the resolved profile named profileName (or the current one).
+// returns the resolved profile named profileName.
+//
+// Profile selection follows the AWS CLI precedence: an explicit profile name
+// (flag) wins, then $XO_PROFILE, then the file's current profile, then the
+// default profile.
 func Load(profileName string) (*ClientConfig, error) {
+	file, err := read()
+	if err != nil {
+		return nil, err
+	}
+
 	if profileName == "" {
 		profileName = os.Getenv(EnvProfile)
 	}
 	if profileName == "" {
-		profileName = DefaultProfile
+		profileName = file.Current
 	}
-
-	file, err := read()
-	if err != nil {
-		return nil, err
+	if profileName == "" {
+		profileName = DefaultProfile
 	}
 
 	profile := findProfile(file, profileName)

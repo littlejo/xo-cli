@@ -39,8 +39,97 @@ jobs:
       - name: Test
         run: go test ./...
 
+      # Data races are a classic source of flaky field reports; the race
+      # detector is cheap enough to run on every push (ubuntu-latest ships a
+      # C toolchain, which -race requires).
+      - name: Test (race)
+        run: go test -race ./...
+
       - name: Test (integration, skipped when not configured)
         run: go test -tags=integration ./...
 
       - name: Build
         run: go build -o dist/xo ./cmd/xo
+
+  # Functional tests: run the CLI's -tags=integration suite against the
+  # xo-api-sim REST API simulator, so CI exercises real requests end-to-end
+  # without a live Xen Orchestra instance or any credential.
+  #
+  # The simulator is fetched from its public GitHub mirror at a pinned commit
+  # (the canonical repo, git.vates.tech/vates/xo-api-sim, is private). No
+  # secrets are required: every xo-api-sim dependency resolves from the public
+  # npm registry.
+  #
+  # Auth note: the SDK v2 client authenticates with an `authenticationToken`
+  # cookie, but xo-api-sim only accepts an `Authorization: Bearer` header, so
+  # the CLI is answered 401 out of the box. ci/xo-api-sim-cookie-auth.patch
+  # makes the simulator accept the cookie too (a known gap to fix upstream).
+  # See that file for the full explanation.
+  #
+  # The simulator runs from its compiled entry (node dist/index.js), the same
+  # way its own CI does: `npm start` (ts-node) breaks at runtime with the
+  # ESM-only uuid v14 dependency.
+  functional:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.1'
+          cache: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Pinned to the commit the cookie-auth patch was generated against.
+      - name: Fetch xo-api-sim and apply the cookie-auth patch
+        run: |
+          SIM_REF=ee5e2a91521e4b048b1f29b09a6d66e42c76e202
+          git clone --quiet https://github.com/vatesfr/xo-api-sim.git xo-api-sim
+          git -C xo-api-sim checkout --quiet "$SIM_REF"
+          # Verify the patch applies before committing to it.
+          git -C xo-api-sim apply --check ../ci/xo-api-sim-cookie-auth.patch
+          git -C xo-api-sim apply ../ci/xo-api-sim-cookie-auth.patch
+          git -C xo-api-sim status --short
+
+      - name: Install and build xo-api-sim
+        working-directory: xo-api-sim
+        run: |
+          # --ignore-scripts: the prepare script runs the build already; we do
+          # it explicitly below (same flow as xo-api-sim's own CI).
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Run functional tests against xo-api-sim
+        env:
+          XO_TEST_URL: http://localhost:3001
+          XO_TEST_TOKEN: test-token
+        run: |
+          set -euo pipefail
+          ( cd xo-api-sim && PORT=3001 AUTH_TOKEN=test-token node dist/index.js > /tmp/xo-api-sim.log 2>&1 & echo $! > /tmp/xo-api-sim.pid )
+          SIM_PID=$(cat /tmp/xo-api-sim.pid)
+          cleanup() { kill "$SIM_PID" 2>/dev/null || true; }
+          trap cleanup EXIT
+
+          # Wait until the simulator answers, failing fast if it dies early.
+          for _ in $(seq 1 60); do
+            if curl -fsS http://localhost:3001/ping > /dev/null; then
+              echo "xo-api-sim ready"
+              break
+            fi
+            if ! kill -0 "$SIM_PID" 2>/dev/null; then
+              echo "xo-api-sim exited before becoming ready:" >&2
+              cat /tmp/xo-api-sim.log >&2
+              exit 1
+            fi
+            sleep 2
+          done
+          if ! curl -fsS http://localhost:3001/ping > /dev/null; then
+            echo "xo-api-sim did not become ready in time:" >&2
+            cat /tmp/xo-api-sim.log >&2
+            exit 1
+          fi
+
+          go test -tags=integration -v ./...
