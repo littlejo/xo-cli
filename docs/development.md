@@ -5,6 +5,29 @@ and local development — see [AGENTS.md](../AGENTS.md) for the architecture
 rules and conventions (the important one: `xenorchestra-go-sdk/v2` is the only
 Xen Orchestra API layer).
 
+## Architecture
+
+`xo` is a thin UX layer over the official Go SDK
+([`github.com/vatesfr/xenorchestra-go-sdk/v2`](https://github.com/vatesfr/xenorchestra-go-sdk)).
+It talks to the Xen Orchestra **REST API** only — there is no second HTTP
+client and no legacy JSON-RPC (v1) code path:
+
+```text
+   xo Go CLI (commands / output / query / config)
+        │
+        ▼
+   xenorchestra-go-sdk/v2          ← the only Xen Orchestra client
+        │
+        ▼
+   Xen Orchestra REST API
+```
+
+Commands stay thin: they resolve flags, call the SDK, and hand the result to
+the output layer. SDK gaps (for example the missing typed VM update) are
+reached through the SDK's own HTTP facilities, documented in the code, and
+contributed upstream where appropriate. The full rules are in
+[AGENTS.md](../AGENTS.md).
+
 ## Toolchain
 
 A [mise](https://mise.jdx.dev/) config pins the Go toolchain (`mise.toml`):
@@ -89,6 +112,14 @@ automatically. To release a specific commit by hand:
 ```sh
 git tag v1.0.0 && git push origin v1.0.0
 ```
+
+## Versioning
+
+Releases follow [semantic versioning](https://semver.org/) and
+[Conventional Commits](https://www.conventionalcommits.org/): a `feat` commit
+bumps the minor version, anything else bumps the patch version. Tags are
+created automatically on push to `main` (see
+[CI / Release](#ci--release)).
 
 ## Repository layout
 
@@ -194,4 +225,34 @@ v1.19.0 version number is the *module* version, not the REST API version
 | `template list/get`, `task list/get` | raw `client.TypedGet` |
 | `token list/get/create` | raw `*client.Client` (GET/POST, 307 redirect) |
 | `rest` | raw `*client.Client` (full method set) |
+
+## Roadmap
+
+Done:
+
+- [x] `xo configure` + profiles
+- [x] `xo vm list`
+- [x] `xo host list / get`
+- [x] `xo sr list / get`
+- [x] `xo pool list / get`
+- [x] `xo network list / get`
+- [x] `xo vm get / start / stop / reboot / snapshot`
+- [x] `xo vm create / update / tag add / tag remove`
+- [x] `xo template list / get`
+- [x] `xo task list / get` (asynchronous operations)
+- [x] `xo token list / get / create`
+- [x] `xo rest` (raw REST escape hatch on top of SDK v2)
+
+Planned, as the SDK v2 exposes them (see also the
+[comparison](comparison.md)):
+
+- [ ] VM import / export (XVA)
+- [ ] Remaining VM lifecycle operations (`delete`, `pause`, `resume`, `suspend`)
+- [ ] `xo watch` (live events)
+- [ ] More resources: VDI, VBD, servers, users, groups, backups
+
+## License
+
+This project is licensed under the [MIT License](https://opensource.org/licenses/MIT),
+the same license as the Xen Orchestra Go SDK.
 

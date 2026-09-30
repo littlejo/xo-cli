@@ -60,9 +60,8 @@ xo vm list
 | Page | Contents |
 | ---- | -------- |
 | [Usage](docs/usage.md) | Installation, configuration, every command, output & querying |
-| [Development](docs/development.md) | Toolchain, testing, functional tests against the simulator, CI & release |
+| [Development](docs/development.md) | Architecture, toolchain, testing, CI & release, versioning, roadmap, license |
 | [Comparison with `xo-cli`](docs/comparison.md) | Side-by-side with the reference XO CLI |
-| [Miscellaneous](docs/misc.md) | Architecture, roadmap, versioning, license |
 
 Architecture rules for contributors live in [AGENTS.md](AGENTS.md).
 
