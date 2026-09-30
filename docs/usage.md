@@ -25,18 +25,8 @@ Download `xo_<version>_<os>_<arch>.tar.gz` (or `.zip` on Windows) from the
 
 ### From source
 
-Requires Go 1.26+ (a [mise](https://mise.jdx.dev/) config is included).
-
-```sh
-go build -o dist/xo ./cmd/xo
-```
-
-or, with mise:
-
-```sh
-mise install
-mise run build      # -> dist/xo
-```
+Requires Go 1.26+ (a [mise](https://mise.jdx.dev/) config is included) — see
+[Development → Toolchain](development.md#toolchain) for the build commands.
 
 ## Configuration
 
