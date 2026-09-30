@@ -56,24 +56,27 @@ contributed upstream where appropriate. The full rules are in
 
 ## Toolchain
 
-A [mise](https://mise.jdx.dev/) config pins the Go toolchain (`mise.toml`):
+A [mise](https://mise.jdx.dev/) config pins the Go toolchain and
+golangci-lint (`mise.toml`):
 
 ```sh
-mise install          # install the pinned Go toolchain
+mise install          # install the pinned Go toolchain and golangci-lint
 mise run build        # go build -o dist/xo ./cmd/xo
 mise run test         # go test ./...
-mise run lint         # go vet ./... + gofmt check
+mise run lint         # golangci-lint run + go vet + gofmt check
 ```
 
-Without mise, a Go 1.26+ toolchain works directly:
+Without mise, a Go 1.26+ toolchain and golangci-lint (v2.14.0) work
+directly:
 
 ```sh
 go build -o dist/xo ./cmd/xo
 go test ./...
-go vet ./... && test -z "$(gofmt -l .)"
+golangci-lint run && go vet ./... && test -z "$(gofmt -l .)"
 ```
 
-`golangci-lint` (v2.14.0) is the reference linter; CI runs it on every push.
+`golangci-lint` (v2.14.0) is the reference linter; the version pinned in
+`mise.toml` matches the one CI runs on every push.
 
 ## Testing
 
