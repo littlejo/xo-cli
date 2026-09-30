@@ -84,14 +84,16 @@ func NewCommand() *cobra.Command {
 		Short: "Call a raw Xen Orchestra REST endpoint",
 		Long: `Call a raw Xen Orchestra REST endpoint.
 
-This is an escape hatch for endpoints the SDK v2 does not expose as a typed
-command yet. The request is sent through the SDK v2 HTTP client (same
-authentication, base URL and TLS handling as every other command), so this is
-not a second REST client. Prefer the typed commands ('xo vm list', 'xo host
-get', ...) when they cover what you need.
+This is an escape hatch for endpoints that have no typed command yet (VDI/VBD
+management, users and groups, SR actions, ...), not a duplicate of the typed
+commands: if 'xo vm list' covers it, use 'xo vm list'. The request is sent
+through the SDK v2 HTTP client (same authentication, base URL and TLS
+handling), so this is not a second REST client. The OpenAPI spec at
+<endpoint>/rest/v0/docs lists every endpoint and its fields; the REST API
+documentation lives at https://docs.xen-orchestra.com/automation/restapi.
 
-The <path> is relative to the REST API root (/rest/v0), so 'vms' hits
-/rest/v0/vms.
+The <path> is relative to the REST API root (/rest/v0), so 'vdis' hits
+/rest/v0/vdis.
 
 Methods: get, post, put, patch, delete.
 The request body (for post/put/patch) comes from --data as JSON; use --data -
@@ -100,15 +102,15 @@ to read it from stdin.
 'xo rest delete' asks for confirmation; pass --yes to run non-interactively.
 
 Examples:
-  xo rest get vms
-  xo rest get vms --param limit=10
-  xo rest get vms/<id>
-  xo rest post vms --data '{"name_label":"web-01","template":"<id>"}'
-  xo rest patch vms/<id> --data '{"name_label":"web-01"}'
-  xo rest delete vms/<id> --yes
-  xo rest post vms --data - < vm.json
-  xo rest get vms --output json --query '[].name_label'
-  xo rest get vms -i    # also print the status line and headers on stderr`,
+  xo rest get vdis                  # list disks (no 'xo vdi' command yet)
+  xo rest get vdis --param limit=10
+  xo rest get vdis/<id>
+  xo rest post vdis --data '{"name_label":"data"}' --param sr=<id>
+  xo rest post srs/<id>/actions/scan       # action without a typed command
+  xo rest delete vdis/<id> --yes
+  xo rest post vdis --data - < vdi.json
+  xo rest get vdis --output json --query '[].name_label'
+  xo rest get vdis -i             # also print the status line and headers on stderr`,
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			method := strings.ToUpper(args[0])

@@ -240,23 +240,37 @@ xo template get <id>            # one template (table/json/yaml)
 
 ### `xo rest`
 
-Low-level escape hatch for any Xen Orchestra REST endpoint the SDK does not
-(yet) wrap in a typed command. The request goes through the SDK v2 HTTP client
+Low-level escape hatch for Xen Orchestra REST endpoints that have no typed
+command yet. Use it for what the typed commands don't cover — VDI/VBD
+management, users and groups, SR actions, … — not to duplicate `xo vm list`
+when `xo vm list` exists. The request goes through the SDK v2 HTTP client
 (same authentication, base URL and TLS handling), so it is not a second REST
 client. Prefer the typed commands when they cover what you need.
 
-The path is relative to the REST API root (`/rest/v0`).
+The path is relative to the REST API root (`/rest/v0`), and the full OpenAPI
+spec at `<endpoint>/rest/v0/docs` lists every endpoint and its fields. See
+also the [official REST API documentation](https://docs.xen-orchestra.com/automation/restapi).
 
 ```sh
-xo rest get vms                                # list VMs (any endpoint works)
-xo rest get vms --param limit=10               # add query parameters
-xo rest get vms/<id>                           # GET a single object
-xo rest post vms --data '{"name_label":"web-01"}'   # send a JSON body
-xo rest patch vms/<id> --data '{"name_label":"x"}'  # partial update
-xo rest delete vms/<id> --yes                  # destructive: asks unless --yes
-xo rest post vms --data - < vm.json            # read the body from stdin
-xo rest get vms --output json --query '[].name_label'
-xo rest get vms -i                             # status line + headers on stderr
+# Resources with no typed command yet
+xo rest get vdis                               # list disks (no 'xo vdi' yet)
+xo rest get vdis/<id>                          # GET a single disk
+xo rest get users --output json                # list users
+xo rest get groups                             # list groups
+
+# Actions without a typed command
+xo rest post srs/<id>/actions/scan             # rescan an SR
+xo rest post srs/<id>/actions/reclaim_space    # reclaim free space on an SR
+xo rest post vbds/<id>/actions/connect         # attach a disk
+xo rest post vbds/<id>/actions/disconnect      # detach a disk
+
+# Request building
+xo rest get vdis --param limit=10              # add query parameters
+xo rest post vdis --data '{"name_label":"data"}' --param sr=<id>   # JSON body
+xo rest post vdis --data - < vdi.json          # read the body from stdin
+xo rest delete vdis/<id> --yes                 # destructive: asks unless --yes
+xo rest get vdis --output json --query '[].name_label'
+xo rest get vdis -i                             # status line + headers on stderr
 ```
 
 Flags: `--data/-d` (JSON body, `-` = stdin), `--param KEY=VALUE` (repeatable),
