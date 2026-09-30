@@ -1,0 +1,290 @@
+# Using `xo`
+
+This page is the detailed reference: installation, configuration, every
+command, and the output/querying model. For the overview and a five-minute
+quickstart, see the [README](../README.md).
+
+## Installation
+
+### Install script
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/littlejo/xo-gocli/main/install.sh | sh
+```
+
+The script detects your OS and architecture, downloads the latest release
+artifact, verifies its checksum, and installs the binary to
+`/usr/local/bin` (or `~/.local/bin` if you don't have write access).
+
+### Manual download
+
+Download `xo_<version>_<os>_<arch>.tar.gz` (or `.zip` on Windows) from the
+[Releases page](https://github.com/littlejo/xo-gocli/releases), verify it against
+`xo_<version>_checksums.txt`, extract it and put the `xo` binary on your
+`PATH`.
+
+### From source
+
+Requires Go 1.26+ (a [mise](https://mise.jdx.dev/) config is included).
+
+```sh
+go build -o dist/xo ./cmd/xo
+```
+
+or, with mise:
+
+```sh
+mise install
+mise run build      # -> dist/xo
+```
+
+## Configuration
+
+Profiles are stored in `~/.config/xo/config` (override the location with
+`$XO_CONFIG_FILE`). The file is written with `0600` permissions because it may
+hold credentials.
+
+```yaml
+current: lab
+profiles:
+  - name: lab
+    endpoint: https://xo.example.com
+    token: <token>
+    # OR: username: admin / password: <secret>
+    # OR: insecure: true
+```
+
+The active profile is resolved in this order: `--profile`, then `$XO_PROFILE`,
+then the file's `current` entry, then the `default` profile.
+
+### `xo configure`
+
+```sh
+xo configure                                   # interactive, default profile
+xo configure --profile lab                     # interactive, named profile
+xo configure --profile lab --endpoint https://xo.example.com --token <token>
+xo configure --profile lab --username admin --password <secret>
+xo configure --profile lab --insecure          # skip TLS verification
+```
+
+Values given with flags win over environment variables; unset values fall back
+to the environment (`XO_ENDPOINT`, `XO_TOKEN`, `XO_USERNAME`, `XO_PASSWORD`),
+then to an interactive prompt when stdin is a terminal.
+
+### Environment variables
+
+Environment variables always take precedence over the stored profile at run
+time:
+
+| Variable         | Purpose                                   |
+| ---------------- | ----------------------------------------- |
+| `XO_PROFILE`     | Select the active profile                 |
+| `XO_ENDPOINT`    | Xen Orchestra base URL                    |
+| `XO_TOKEN`       | Authentication token                      |
+| `XO_USERNAME`    | Username (alternative to a token)         |
+| `XO_PASSWORD`    | Password (alternative to a token)         |
+| `XO_INSECURE`    | Skip TLS certificate verification         |
+| `XO_CONFIG_FILE` | Location of the configuration file        |
+
+Either a token, or a username + password, must be available to authenticate.
+
+### Insecure mode
+
+For self-signed or internally-issued certificates:
+
+```sh
+xo configure --profile lab --insecure          # stored in the profile
+XO_INSECURE=1 xo vm list                        # per invocation
+```
+
+This disables certificate verification and is only appropriate for internal,
+trusted networks. When a connection fails on certificate verification and
+insecure mode is not enabled, the error points at this escape hatch.
+
+## Commands
+
+### Global flags
+
+| Flag            | Description                                             |
+| --------------- | ------------------------------------------------------- |
+| `--profile`     | Configuration profile to use (or `$XO_PROFILE`)         |
+| `--output`      | Output format: `table` (default), `json`, `yaml`, `text`|
+
+Every command also accepts `--help`; commands that return data accept
+`--query` (see [Output & querying](#output--querying)).
+
+### `xo vm`
+
+```sh
+# Read
+xo vm list                          # all VMs
+xo vm list --output json            # machine readable
+xo vm list --power-state Running    # filter by power state
+xo vm list --limit 10               # cap the number of results
+xo vm list --query '[].name_label'  # project a single field
+xo vm get <id>                      # one VM (table/json/yaml)
+
+# Create
+xo vm create web-02 --pool <pool-id> --template <template-id>
+xo vm create web-02 --pool <pool-id> --template <template-id> --memory 4G
+xo vm create web-02 --pool <pool-id> --template <template-id> --boot
+
+# Update
+xo vm update <id> --name web-01
+xo vm update <id> --description "primary web server"
+xo vm update <id> --tags production,web     # replaces the full tag list
+
+# Tags
+xo vm tag add <id> production
+xo vm tag remove <id> production
+
+# Lifecycle (all return an async task id)
+xo vm start <id>                    # power on
+xo vm start <id> --host <host-id>   # pin to a host
+xo vm stop <id>                     # clean shutdown (asks to confirm)
+xo vm stop <id> --hard              # power off immediately
+xo vm stop <id> --yes               # skip confirmation (automation)
+xo vm reboot <id>                   # clean reboot
+xo vm reboot <id> --hard            # force a hard reboot
+xo vm snapshot <id>                 # take a snapshot
+xo vm snapshot <id> --name backup   # label the snapshot
+```
+
+`--memory` accepts bytes or human-readable sizes (`2G`, `512M`).
+
+Destructive operations (`stop`) require confirmation; pass `--yes` to run
+non-interactively. Without `--yes`, a non-terminal stdin is rejected rather
+than hanging, so automation never blocks.
+
+### `xo host`
+
+```sh
+xo host list
+xo host list --query '[].name_label'
+xo host list --query '[?power_state==`Running`].name_label'
+xo host get <id>
+```
+
+### `xo sr`
+
+```sh
+xo sr list
+xo sr list --type lvm               # filter by SR type (see note below)
+xo sr list --query '[?SR_type==`nfs`].name_label'
+xo sr get <id>
+```
+
+`--type` is passed to the XO live-filter engine, which is a case-insensitive
+substring match: `--type lvm` also matches `lvmoiscsi`. For an exact type,
+project with `--query` instead.
+
+### `xo pool`
+
+```sh
+xo pool list
+xo pool list --query '[?HA_enabled].name_label'
+xo pool get <id>
+```
+
+### `xo network`
+
+```sh
+xo network list
+xo network list --query '[].name_label'
+xo network get <id>                 # one network (table/json/yaml)
+```
+
+### `xo task`
+
+```sh
+xo task list                        # all asynchronous tasks
+xo task list --status failure       # filter by status (pending, success, failure, interrupted)
+xo task list --query '[].id'
+xo task get <id>                    # one task (table/json/yaml)
+```
+
+Asynchronous operations (`vm start`, `vm create`, …) return a task id; follow
+it with `xo task get <id>`.
+
+### `xo token`
+
+Manage the authentication tokens of the current user (the same value `xo
+configure` stores). The token **id is the secret**, so it is masked in the
+output by default — pass `--no-secret` to reveal it (use with care).
+
+```sh
+xo token list                         # your tokens (id masked)
+xo token list --no-secret --query '[].id'
+xo token get <id>                     # one token (resolved against the list)
+xo token create                       # create a token, printed in full once
+xo token create --description "ci" --expires-in "30 days"
+xo token create --client-id my-cli    # reuse the token for a given client
+```
+
+`create` prints the token in full **once** (save it, e.g. into `xo
+configure`); `list`/`get` only show a masked id. Deletion is not exposed by
+the REST API and is therefore not implemented here.
+
+### `xo template`
+
+In Xen Orchestra, templates are first-class objects (REST resource
+`vm-templates`), not part of the `vms` collection — so `xo vm list` does not
+show them. `xo template list` reads that dedicated resource.
+
+```sh
+xo template list
+xo template list --output json
+xo template list --query '[].name_label'
+xo template get <id>            # one template (table/json/yaml)
+```
+
+### `xo rest`
+
+Low-level escape hatch for any Xen Orchestra REST endpoint the SDK does not
+(yet) wrap in a typed command. The request goes through the SDK v2 HTTP client
+(same authentication, base URL and TLS handling), so it is not a second REST
+client. Prefer the typed commands when they cover what you need.
+
+The path is relative to the REST API root (`/rest/v0`).
+
+```sh
+xo rest get vms                                # list VMs (any endpoint works)
+xo rest get vms --param limit=10               # add query parameters
+xo rest get vms/<id>                           # GET a single object
+xo rest post vms --data '{"name_label":"web-01"}'   # send a JSON body
+xo rest patch vms/<id> --data '{"name_label":"x"}'  # partial update
+xo rest delete vms/<id> --yes                  # destructive: asks unless --yes
+xo rest post vms --data - < vm.json            # read the body from stdin
+xo rest get vms --output json --query '[].name_label'
+xo rest get vms -i                             # status line + headers on stderr
+```
+
+Flags: `--data/-d` (JSON body, `-` = stdin), `--param KEY=VALUE` (repeatable),
+`--header KEY: VALUE` (repeatable), `--query`, `--yes`, `--include/-i`.
+
+More resources and sub-commands (`get`, `start`, `stop`, …) are added on top of
+the SDK as it evolves. See `xo <resource> --help` for the current surface.
+
+## Output & querying
+
+The pipeline is always: **SDK response → structured data → query → formatter**.
+Queries operate on the structured data, never on rendered tables.
+
+```sh
+xo vm list --output json                      # full objects as JSON
+xo vm list --query '[].name_label'            # one value per line
+xo vm list --query '[?power_state==`Running`].name_label'
+xo vm list --query 'length(@)'                # count
+```
+
+Backtick literals (`` `Running` ``) work as in the AWS CLI even though the
+underlying JMESPath engine uses single quotes.
+
+Format behavior:
+
+- `table` (default): aligned columns for humans; for `get` a single-row table.
+- `json` / `yaml`: the full structured data (or the `--query` projection).
+  Machine-readable output is the only thing on stdout; errors go to stderr, so
+  `xo vm list --output json | jq '.[].name_label'` always works.
+- `text`: a compact key/value form; a list of objects becomes an auto-column
+  table, a list of scalars one value per line.
