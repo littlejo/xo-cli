@@ -67,7 +67,7 @@ Examples:
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&query, flagQuery, "", "JMESPath expression applied to the result, e.g. '[].name_label'")
+	flags.StringVarP(&query, flagQuery, "q", "", "JMESPath expression applied to the result, e.g. '[].name_label'")
 	flags.IntVar(&limit, flagLimit, 0, "maximum number of pools to return (0 for no limit)")
 
 	return cmd

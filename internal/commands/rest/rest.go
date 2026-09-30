@@ -75,7 +75,6 @@ func NewCommand() *cobra.Command {
 		params  []string
 		headers []string
 		query   string
-		yes     bool
 		include bool
 	)
 
@@ -159,7 +158,7 @@ Examples:
 				return err
 			}
 
-			if method == http.MethodDelete && !yes {
+			if method == http.MethodDelete && !cli.SkipConfirm(cmd) {
 				ok, err := confirm(cmd, fmt.Sprintf("Are you sure you want to DELETE %s?", endpoint))
 				if err != nil {
 					return err
@@ -196,8 +195,10 @@ Examples:
 	flags.StringVarP(&data, flagData, "d", "", `JSON request body for post/put/patch ('-' reads stdin)`)
 	flags.StringSliceVar(&params, flagParam, nil, `query parameter KEY=VALUE (repeatable)`)
 	flags.StringSliceVar(&headers, flagHeader, nil, `extra request header KEY: VALUE (repeatable)`)
-	flags.StringVar(&query, flagQuery, "", "JMESPath expression applied to the result, e.g. '[].name_label'")
-	flags.BoolVar(&yes, flagYes, false, "do not ask for confirmation (delete)")
+	flags.StringVarP(&query, flagQuery, "q", "", "JMESPath expression applied to the result, e.g. '[].name_label'")
+	// --yes (or $XO_YES) skips the confirmation; it is read via
+	// cli.SkipConfirm, which sees both the flag and the environment variable.
+	flags.Bool(flagYes, false, "do not ask for confirmation (or set XO_YES=1)")
 	flags.BoolVarP(&include, flagInclude, "i", false, "print the status line and response headers on stderr")
 
 	return cmd

@@ -21,7 +21,8 @@ import (
 )
 
 // flagYes skips the interactive confirmation for destructive operations. It is
-// required whenever stdin is not a terminal so automation never blocks.
+// required whenever stdin is not a terminal so automation never blocks; the
+// $XO_YES environment variable is an equivalent for scripts (cli.SkipConfirm).
 const flagYes = "yes"
 
 // parseID converts a positional VM identifier into a UUID.

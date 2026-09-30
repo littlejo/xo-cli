@@ -94,7 +94,7 @@ Examples:
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&query, flagQuery, "", "JMESPath expression applied to the result, e.g. '[].id'")
+	flags.StringVarP(&query, flagQuery, "q", "", "JMESPath expression applied to the result, e.g. '[].id'")
 	flags.IntVar(&limit, flagLimit, 0, "maximum number of tasks to return (0 for no limit)")
 	flags.StringVar(&status, flagStatus, "", "filter by status: pending, success, failure, interrupted")
 

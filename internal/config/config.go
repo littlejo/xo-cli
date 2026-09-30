@@ -33,12 +33,12 @@ const DefaultProfile = "default"
 
 // Profile holds the connection settings for one Xen Orchestra instance.
 type Profile struct {
-	Name     string `yaml:"name"`
-	Endpoint string `yaml:"endpoint"`
-	Token    string `yaml:"token"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	Insecure bool   `yaml:"insecure"`
+	Name     string `yaml:"name" json:"name"`
+	Endpoint string `yaml:"endpoint" json:"endpoint"`
+	Token    string `yaml:"token" json:"token,omitempty"`
+	Username string `yaml:"username" json:"username,omitempty"`
+	Password string `yaml:"password" json:"password,omitempty"`
+	Insecure bool   `yaml:"insecure" json:"insecure"`
 }
 
 // File is the on-disk representation of the configuration.
@@ -197,6 +197,67 @@ func Upsert(profile Profile, makeCurrent bool) (string, error) {
 		file.Current = profile.Name
 	}
 	return WriteFile(file)
+}
+
+// List returns the stored profiles and the name of the current profile. The
+// credentials are returned verbatim so the caller can mask them.
+func List() (current string, profiles []Profile, err error) {
+	file, err := read()
+	if err != nil {
+		return "", nil, err
+	}
+	if file.Current == "" {
+		file.Current = DefaultProfile
+	}
+	return file.Current, file.Profiles, nil
+}
+
+// GetProfile returns the stored profile named name.
+func GetProfile(name string) (*Profile, error) {
+	file, err := read()
+	if err != nil {
+		return nil, err
+	}
+	profile := findProfile(file, name)
+	if profile == nil {
+		return nil, fmt.Errorf("profile %q is not configured, run 'xo configure --profile %s'", name, name)
+	}
+	return profile, nil
+}
+
+// Remove deletes the profile named name from the configuration file. If it was
+// the current profile, current falls back to the first remaining profile (or
+// the default profile when none remain).
+func Remove(name string) (string, error) {
+	file, err := read()
+	if err != nil {
+		return "", err
+	}
+	kept := file.Profiles[:0]
+	found := false
+	for _, p := range file.Profiles {
+		if p.Name == name {
+			found = true
+			continue
+		}
+		kept = append(kept, p)
+	}
+	if !found {
+		return "", fmt.Errorf("profile %q is not configured, run 'xo configure --profile %s'", name, name)
+	}
+	file.Profiles = kept
+
+	if file.Current == name {
+		if len(kept) > 0 {
+			file.Current = kept[0].Name
+		} else {
+			file.Current = DefaultProfile
+		}
+	}
+	if _, err := WriteFile(file); err != nil {
+		return "", err
+	}
+	return file.Current, nil
 }
 
 // Path returns the location of the configuration file, honoring the

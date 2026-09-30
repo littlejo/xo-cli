@@ -98,7 +98,7 @@ func (s *fakeXO) last() restRequest {
 func isolate(t *testing.T, url string) {
 	t.Helper()
 	t.Setenv("XO_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XO_PROFILE", "XO_ENDPOINT", "XO_TOKEN", "XO_USERNAME", "XO_PASSWORD", "XO_INSECURE"} {
+	for _, key := range []string{"XO_PROFILE", "XO_ENDPOINT", "XO_TOKEN", "XO_USERNAME", "XO_PASSWORD", "XO_INSECURE", "XO_YES"} {
 		t.Setenv(key, "")
 	}
 	t.Setenv("XO_ENDPOINT", url)
@@ -441,6 +441,23 @@ func TestRestDeleteRequiresConfirmation(t *testing.T) {
 	}
 	if len(server.requests) != 0 {
 		t.Fatal("the delete must not be executed without confirmation")
+	}
+}
+
+// XO_YES is the script counterpart of --yes for rest delete.
+
+func TestRestDeleteSkipsConfirmationWithEnvYes(t *testing.T) {
+	server := newFakeXO(t)
+	defer server.Close()
+	isolate(t, server.URL)
+	t.Setenv("XO_YES", "1")
+
+	if _, err := run(t, "rest", "delete", "vms/aaaa-1111"); err != nil {
+		t.Fatalf("rest delete with XO_YES=1: %v", err)
+	}
+	req := server.last()
+	if req.Method != http.MethodDelete || req.Path != "/rest/v0/vms/aaaa-1111" {
+		t.Fatalf("unexpected request: %s %s", req.Method, req.Path)
 	}
 }
 

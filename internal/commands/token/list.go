@@ -82,7 +82,7 @@ Examples:
 	}
 
 	flags := cmd.Flags()
-	flags.StringVar(&query, flagQuery, "", "JMESPath expression applied to the result, e.g. '[].description'")
+	flags.StringVarP(&query, flagQuery, "q", "", "JMESPath expression applied to the result, e.g. '[].description'")
 	flags.IntVar(&limit, flagLimit, 0, "maximum number of tokens to return (0 for no limit)")
 	flags.BoolVar(&noSecret, flagNoSecret, false, "do not mask the token secret in the output")
 
