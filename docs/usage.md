@@ -199,6 +199,11 @@ xo vm update <id> --tags production,web     # replaces the full tag list
 xo vm tag add <id> production
 xo vm tag remove <id> production
 
+# Disks
+xo vm vdis <id>                     # list the VM's VDIs
+xo vm vdis <id> --type user         # filter by VDI type
+xo vm vdis <id> --query '[].name_label'
+
 # Lifecycle (async actions return a task id; delete is synchronous)
 xo vm start <id>                    # power on
 xo vm start <id> --host <host-id>   # pin to a host
