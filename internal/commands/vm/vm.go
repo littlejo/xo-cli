@@ -19,6 +19,11 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(newStartCommand())
 	cmd.AddCommand(newStopCommand())
 	cmd.AddCommand(newRebootCommand())
+	cmd.AddCommand(newPauseCommand())
+	cmd.AddCommand(newUnpauseCommand())
+	cmd.AddCommand(newSuspendCommand())
+	cmd.AddCommand(newResumeCommand())
 	cmd.AddCommand(newSnapshotCommand())
+	cmd.AddCommand(newDeleteCommand())
 	return cmd
 }

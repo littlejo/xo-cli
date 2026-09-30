@@ -24,6 +24,10 @@ import (
 //
 // Unlike the per-resource list tests, this test drives the whole command
 // tree (pool list, template list, vm *, task list) end to end.
+//
+// The VM lifecycle covered is: create -> start -> pause -> unpause ->
+// suspend -> resume -> stop -> snapshot -> tags -> delete, so every VM
+// action exposed by the CLI is exercised against the real REST endpoints.
 
 func TestIntegrationVMLifecycle(t *testing.T) {
 	url := os.Getenv("XO_TEST_URL")
@@ -186,6 +190,73 @@ func TestIntegrationVMLifecycle(t *testing.T) {
 		t.Fatalf("vm get table output should show the VM name %q:\n%s", name, getOut)
 	}
 
+	// 4b. Pause / unpause round trip: pause is a reversible action, so it
+	// runs without confirmation, and the power state must round-trip.
+	pauseOut, err := run("vm", "pause", vmID)
+	if err != nil {
+		t.Fatalf("xo vm pause: %v\n%s", err, pauseOut)
+	}
+	if !strings.Contains(pauseOut, "(task ") {
+		t.Fatalf("pause output should carry a task id:\n%s", pauseOut)
+	}
+	stateOut, err = run("vm", "get", vmID, "--output", "json", "--query", "power_state")
+	if err != nil {
+		t.Fatalf("xo vm get after pause: %v\n%s", err, stateOut)
+	}
+	if err := json.Unmarshal([]byte(stateOut), &state); err != nil {
+		t.Fatalf("power_state is not a JSON string: %v\n%s", err, stateOut)
+	}
+	if state != "Paused" {
+		t.Fatalf("power_state after pause = %q, want Paused", state)
+	}
+
+	if _, err := run("vm", "unpause", vmID); err != nil {
+		t.Fatalf("xo vm unpause: %v", err)
+	}
+	stateOut, err = run("vm", "get", vmID, "--output", "json", "--query", "power_state")
+	if err != nil {
+		t.Fatalf("xo vm get after unpause: %v\n%s", err, stateOut)
+	}
+	if err := json.Unmarshal([]byte(stateOut), &state); err != nil {
+		t.Fatalf("power_state is not a JSON string: %v\n%s", err, stateOut)
+	}
+	if state != "Running" {
+		t.Fatalf("power_state after unpause = %q, want Running", state)
+	}
+
+	// 4c. Suspend / resume round trip, same shape as pause / unpause.
+	suspendOut, err := run("vm", "suspend", vmID)
+	if err != nil {
+		t.Fatalf("xo vm suspend: %v\n%s", err, suspendOut)
+	}
+	if !strings.Contains(suspendOut, "(task ") {
+		t.Fatalf("suspend output should carry a task id:\n%s", suspendOut)
+	}
+	stateOut, err = run("vm", "get", vmID, "--output", "json", "--query", "power_state")
+	if err != nil {
+		t.Fatalf("xo vm get after suspend: %v\n%s", err, stateOut)
+	}
+	if err := json.Unmarshal([]byte(stateOut), &state); err != nil {
+		t.Fatalf("power_state is not a JSON string: %v\n%s", err, stateOut)
+	}
+	if state != "Suspended" {
+		t.Fatalf("power_state after suspend = %q, want Suspended", state)
+	}
+
+	if _, err := run("vm", "resume", vmID); err != nil {
+		t.Fatalf("xo vm resume: %v", err)
+	}
+	stateOut, err = run("vm", "get", vmID, "--output", "json", "--query", "power_state")
+	if err != nil {
+		t.Fatalf("xo vm get after resume: %v\n%s", err, stateOut)
+	}
+	if err := json.Unmarshal([]byte(stateOut), &state); err != nil {
+		t.Fatalf("power_state is not a JSON string: %v\n%s", err, stateOut)
+	}
+	if state != "Running" {
+		t.Fatalf("power_state after resume = %q, want Running", state)
+	}
+
 	// 5. Stop is destructive: without --yes and without a terminal it must
 	// refuse to run, and with --yes it must proceed.
 	if out, err := run("vm", "stop", vmID); err == nil {
@@ -235,8 +306,8 @@ func TestIntegrationVMLifecycle(t *testing.T) {
 	if err := json.Unmarshal([]byte(strings.TrimSpace(taskOut)), &count); err != nil {
 		t.Fatalf("task count is not a JSON number: %v\n%s", err, taskOut)
 	}
-	if count < 4 {
-		t.Fatalf("expected at least 4 tasks (create, start, stop, snapshot), got %d", count)
+	if count < 8 {
+		t.Fatalf("expected at least 8 tasks (create, start, pause, unpause, suspend, resume, stop, snapshot), got %d", count)
 	}
 
 	// Note: 'vm update' is intentionally not exercised here. Its PATCH body
@@ -269,5 +340,19 @@ func TestIntegrationVMLifecycle(t *testing.T) {
 	}
 	if _, err := run("vm", "tag", "remove", vmID, "ci-func"); err != nil {
 		t.Fatalf("xo vm tag remove: %v", err)
+	}
+
+	// 9. Delete is destructive: without --yes and without a terminal it must
+	// refuse to run, and with --yes it must remove the VM.
+	if out, err := run("vm", "delete", vmID); err == nil {
+		t.Fatalf("delete without --yes must not proceed without a terminal:\n%s", out)
+	}
+	if _, err := run("vm", "delete", vmID, "--yes"); err != nil {
+		t.Fatalf("xo vm delete --yes: %v", err)
+	}
+	if out, err := run("vm", "get", vmID); err == nil {
+		t.Fatalf("the deleted VM must not be retrievable:\n%s", out)
+	} else if !strings.Contains(out, "not found") {
+		t.Fatalf("get on a deleted VM should report not found:\n%s", out)
 	}
 }
