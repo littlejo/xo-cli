@@ -101,3 +101,96 @@ internal/
   config/                profiles, environment overrides, config file
   output/                table/json/yaml/text rendering, JMESPath queries
 ```
+
+## SDK v2: what we build on
+
+This is the result of inspecting `xenorchestra-go-sdk` (pinned in `go.mod`)
+before implementing each command, per the SDK-first rule in
+[AGENTS.md](../AGENTS.md). Keep it updated when the SDK moves.
+
+### Module layout
+
+The SDK is a **single Go module** (`github.com/vatesfr/xenorchestra-go-sdk`,
+pinned at `v1.19.0` in `go.mod`) that contains **both** APIs:
+
+| Path | API | Used by xo-gocli |
+| ---- | --- | ---------------- |
+| `client/`, `pkg/services/jsonrpc/` | v1: JSON-RPC over WebSocket | **never** |
+| `v2/` | v2: REST client + typed services | **yes — the only API layer** |
+| `pkg/config/` | shared config type | yes (via `v2`) |
+| `pkg/payloads/` | shared REST response types | yes (returned by the typed services) |
+
+There is no `v2/go.mod`: `v2` is a plain subdirectory, so the import path
+`github.com/vatesfr/xenorchestra-go-sdk/v2` is a subpackage of the v1 module
+— the `/v2` suffix is a directory name, not a Go major-version path. The
+v1.19.0 version number is the *module* version, not the REST API version
+(the REST API itself is `/rest/v0`).
+
+### Two entry points
+
+1. **`v2.New(cfg) → library.Library`** — the typed facade. Returns
+   `VM()`, `Host()`, `Pool()`, `SR()`, `Network()`, `Task()`, `VDI()`, `VBD()`,
+   `PBD()`. Every service method is a REST call through the internal
+   `v2/client` (`client.TypedGet` & co.), returning `pkg/payloads` structs.
+   This is what `internal/cli.NewClient` builds and what most commands use.
+2. **`v2/client.New(cfg) → *client.Client`** — the raw REST client. The SDK
+   *exports* `HttpClient`, `BaseURL` and `AuthToken` precisely so callers can
+   reach endpoints the SDK does not (yet) wrap. `internal/cli.NewHTTPClient`
+   is built on it and powers `xo rest`, `xo token`, `xo template`, `xo task`
+   and the VM PATCH in `xo vm update`. That is the documented escape hatch,
+   not a second REST client.
+
+### Authentication & transport
+
+- Token mode: every request carries the token as an
+  `authenticationToken` **cookie** (set by `doRequest`, the SDK's own
+  mechanism). The CLI never sends `Authorization` headers itself.
+- Username/password mode: `client.New` logs in via
+  `POST /auth/login` (base URL **without** `/rest/v0`) and keeps the token
+  cookie from the response.
+- `ws`/`wss` endpoints are transparently rewritten to `http(s)`;
+  `InsecureSkipVerify` is applied on a cloned transport; default HTTP timeout
+  is 30 s (`cfg.ClientTimeout`).
+- `v2/xo.go` also holds a **lazy** v1 client (`V1Client()`), created only if
+  JSON-RPC is actually requested. The CLI never calls it, so no WebSocket is
+  ever opened.
+
+### Request model (as the SDK sends it)
+
+- Base URL is `<endpoint>/rest/v0`; endpoints beginning with `api/` are sent
+  without that prefix.
+- Collection reads: `GET /<resource>` with `fields`, `limit`, `filter`
+  (the XO live-filter syntax) query parameters.
+- Single object: `GET /<resource>/<id>`.
+- Actions: `POST /<resource>/<id>/actions/<name>` → `{"taskId": …}` (202,
+  asynchronous); e.g. `start`, `clean_shutdown`, `hard_shutdown`,
+  `clean_reboot`, `hard_reboot`, `snapshot`.
+- Tags: `PUT`/`DELETE /vms/<id>/tags/<tag>`.
+- Partial update: `PATCH /<resource>/<id>` with **camelCase** JSON fields
+  (`nameLabel`, `nameDescription`, …) — responses, in contrast, use
+  snake_case.
+- Non-2xx responses surface as `API error: <status> - <body>`; the CLI maps
+  the `404` substring to a concise "not found" message.
+- `pkg/config.NewWithValues` (what we use) takes explicit values and reads no
+  environment variables; `pkg/config.New` (env `XOA_*`) is not used.
+
+### Known SDK gaps the CLI works around
+
+| Gap | CLI workaround |
+| --- | -------------- |
+| `VM().Update` returns `not yet implemented` | `xo vm update` sends the PATCH itself via the exported `*client.Client` (documented in `vm/update.go`; to contribute upstream) |
+| No typed service for `vm-templates`, tasks or user tokens | `TypedGet` directly (`xo template`, `xo task`, `xo token`) |
+| `users/me` 307-redirects to the user id | handled by `net/http` following the redirect; `doTokensRequest` relies on 307 body replay for POST |
+| `v2` package `init()` runs `gotenv.Load()` (reads a `.env` in the CWD) | harmless: we build the config with `NewWithValues`, which reads no env vars |
+
+### Which command uses which SDK surface
+
+| Command | SDK surface |
+| ------- | ----------- |
+| `vm list/get/create/start/stop/reboot/snapshot/tag` | typed `library.VM` |
+| `host/pool/sr/network list/get` | typed `library.{Host,Pool,SR,Network}` |
+| `vm update` | raw `*client.Client` (PATCH — SDK gap) |
+| `template list/get`, `task list/get` | raw `client.TypedGet` |
+| `token list/get/create` | raw `*client.Client` (GET/POST, 307 redirect) |
+| `rest` | raw `*client.Client` (full method set) |
+
