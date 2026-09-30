@@ -30,7 +30,8 @@ func newTagCommand() *cobra.Command {
 // tagSpec captures what a tag subcommand needs: the verb shown to the user and
 // the SDK call to run.
 type tagSpec struct {
-	verb    string
+	verb    string // base form, used in error messages ("cannot add tag ...")
+	past    string // past form, used in the confirmation ("Tag ... added on ...")
 	tag     string
 	perform func(ctx context.Context, xo library.Library, id uuid.UUID, tag string) error
 }
@@ -60,7 +61,7 @@ func runTag(cmd *cobra.Command, idStr string, spec tagSpec) error {
 		return cli.InsecureHint(fmt.Sprintf("cannot %s tag %q on VM %q: %v", spec.verb, spec.tag, name, err), cfg.Insecure)
 	}
 
-	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Tag %q %sd on VM %q\n", spec.tag, spec.verb, name)
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Tag %q %s on VM %q\n", spec.tag, spec.past, name)
 	return err
 }
 
@@ -78,7 +79,8 @@ Examples:
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runTag(cmd, args[0], tagSpec{
-				verb: "added",
+				verb: "add",
+				past: "added",
 				tag:  args[1],
 				perform: func(ctx context.Context, xo library.Library, id uuid.UUID, tag string) error {
 					return xo.VM().AddTag(ctx, id, tag)
@@ -103,7 +105,8 @@ Examples:
 		Args: cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return runTag(cmd, args[0], tagSpec{
-				verb: "removed",
+				verb: "remove",
+				past: "removed",
 				tag:  args[1],
 				perform: func(ctx context.Context, xo library.Library, id uuid.UUID, tag string) error {
 					return xo.VM().RemoveTag(ctx, id, tag)
