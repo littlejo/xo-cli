@@ -1,5 +1,8 @@
 [tools]
 go = "1.27.1"
+# Pinned to the version the CI runs (.github/workflows/ci.yml), so
+# `mise run lint` and CI give the same results.
+golangci-lint = "2.14.0"
 
 [tasks.build]
 description = "Build the xo binary into dist/"
@@ -10,8 +13,9 @@ description = "Run the unit test suite"
 run = "go test ./..."
 
 [tasks.lint]
-description = "Run go vet and check formatting"
+description = "Run golangci-lint, go vet and check formatting"
 run = """
+golangci-lint run &&
 go vet ./... &&
 test -z "$(gofmt -l .)" && echo "gofmt: OK"
 """
