@@ -23,7 +23,7 @@ How each tool feels when driven by hand:
 | Filtering / projection | `filter=` / `fields=` parameters (XO filter syntax)                           | AWS-CLI-like `--query` with JMESPath (incl. backtick literals)                                          |
 | Task management      | `rest get tasks/<id> wait[=result]`, `rest post tasks/<id>/actions/abort`       | `task list` / `task get` (list filterable by `--status`); lifecycle actions return the task id          |
 | VM lifecycle         | All methods (`vm.start`, `vm.stop`, `vm.reboot`, `vm.pause`, …)                 | `create`, `start` (host pinning), `stop` (clean/hard, confirm + `--yes`), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete` (confirm + `--yes`), `tag add/remove`, `update` (name/description/tags) |
-| VM import / export (XVA) | `vm.import` / `vm.export` (file streaming with `@=`)                        | Not implemented (SDK v2 exposes VDI import/export)                                                      |
+| VM import / export (XVA) | `vm.import` / `vm.export` (file streaming with `@=`)                        | `vm export` (XVA/OVA to file or stdout, `--compress`) / `vm import` (XVA from file or stdin, `--pool`/`--sr`) |
 | Token management     | `create-token` (accepts same params as `register`)                              | `token list / get / create` with secret masking in output                                               |
 | Live events          | `xo-cli watch [--ndjson]` (stream of notifications)                             | Not implemented                                                                                         |
 | Raw REST escape hatch | `xo-cli rest get/post/patch/put/del` for any endpoint                          | `xo rest <method> <path>` (on top of SDK v2 HTTP facilities, not a second client)                       |
@@ -68,7 +68,7 @@ what is missing (and what already exists in the SDK) is in the
   destructive operations, a static binary, and a REST-only architecture with
   no JSON-RPC/WebSocket dependency — better suited for automation, CI, and
   shell scripting.
-- **What is still missing** (roadmap): `watch`, VM import/export, and more
+- **What is still missing** (roadmap): `watch`, and more
   resources (VDI, VBD, servers, users, groups, backups). These are added as
   they are exposed by the Go SDK v2, per the
   [architecture rules](../AGENTS.md).

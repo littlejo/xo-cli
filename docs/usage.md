@@ -213,6 +213,8 @@ xo vm suspend <id>                  # save to disk and release memory (state: Su
 xo vm resume <id>                   # restore a suspended VM
 xo vm snapshot <id>                 # take a snapshot
 xo vm snapshot <id> --name backup   # label the snapshot
+xo vm export <id> > vm.xva          # export to XVA (or --file, --format ova)
+xo vm import vm.xva --pool <pool>   # import an XVA into a pool
 xo vm delete <id>                   # delete the VM (asks to confirm)
 xo vm delete <id> --yes             # skip confirmation (automation)
 ```
@@ -223,6 +225,13 @@ Destructive operations (`stop`, `delete`) require confirmation; pass `--yes`
 (or set `XOA_YES`) to run non-interactively. Without either, a non-terminal
 stdin is rejected rather than hanging, so automation never blocks. The
 reversible actions (`pause`, `unpause`, `suspend`, `resume`) never prompt.
+
+`vm export` streams the archive to stdout by default (use `--file` for a
+file, `--format ova` for OVA, `--compress=false` to disable XVA
+compression); `vm import` reads the XVA from a file or stdin (`-`) and
+requires `--pool`. Both are performed through the SDK's own REST client
+because the typed SDK service does not expose them yet (see
+[development](development.md#known-sdk-gaps-the-cli-works-around)).
 
 ### `xo host`
 

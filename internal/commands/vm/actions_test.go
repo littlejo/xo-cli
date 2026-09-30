@@ -49,6 +49,7 @@ type request struct {
 	Method string
 	Path   string
 	Body   string
+	Query  string
 }
 
 func newActionServer(t *testing.T) *actionServer {
@@ -56,7 +57,7 @@ func newActionServer(t *testing.T) *actionServer {
 	s := &actionServer{t: t}
 	s.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := readBody(r)
-		s.requests = append(s.requests, request{Method: r.Method, Path: r.URL.Path, Body: body})
+		s.requests = append(s.requests, request{Method: r.Method, Path: r.URL.Path, Body: body, Query: r.URL.RawQuery})
 
 		if cookie, err := r.Cookie("authenticationToken"); err != nil || cookie.Value != "test-token" {
 			w.WriteHeader(http.StatusUnauthorized)

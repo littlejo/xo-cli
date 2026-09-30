@@ -240,6 +240,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 | Gap | CLI workaround |
 | --- | -------------- |
 | `VM().Update` returns `not yet implemented` | `xo vm update` sends the PATCH itself via the exported `*client.Client` (documented in `vm/update.go`; to contribute upstream) |
+| No typed VM XVA/OVA import/export | `xo vm export` / `xo vm import` stream through the exported `*client.Client` against `GET /vms/<id>.<format>` and `POST /pools/<pool>/vms` (documented in `vm/xva.go`; to contribute upstream) |
 | No typed service for `vm-templates`, tasks or user tokens | `TypedGet` directly (`xo template`, `xo task`, `xo token`) |
 | `users/me` 307-redirects to the user id | handled by `net/http` following the redirect; `doTokensRequest` relies on 307 body replay for POST |
 | `v2` package `init()` runs `gotenv.Load()` (reads a `.env` in the CWD) | harmless: we build the config with `NewWithValues`, which reads no env vars |
@@ -250,6 +251,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 | Command | SDK surface |
 | ------- | ----------- |
 | `vm list/get/create/start/stop/reboot/pause/unpause/suspend/resume/snapshot/delete/tag` | typed `library.VM` |
+| `vm export/import` | raw `*client.Client` (XVA/OVA streaming — SDK gap) |
 | `host/pool/sr/network list/get` | typed `library.{Host,Pool,SR,Network}` |
 | `vm update` | raw `*client.Client` (PATCH — SDK gap) |
 | `template list/get`, `task list/get` | raw `client.TypedGet` |
@@ -263,7 +265,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 
 - `xo configure` + named profiles (with environment overrides)
 - `list` / `get` for `vm`, `host`, `pool`, `sr`, `network`, `task`, `template`, `token`
-- VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete`, `update`, `tag add/remove`
+- VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete`, `export`/`import` (XVA/OVA), `update`, `tag add/remove`
 - `xo rest` raw REST escape hatch on top of the SDK v2 HTTP facilities
 
 The remainder is organized in four layers. The deeper a layer, the more it
@@ -304,8 +306,7 @@ Each resource added here reduces the need for `xo rest`.
 Requires an upstream contribution (or the exported `*client.Client` in the
 meantime, per the SDK-first rule):
 
-- VM: `clone`, `migrate` (both exist as REST actions), XVA
-  import/export (`GET /vms/<id>.xva`), snapshots
+- VM: `clone`, `migrate` (both exist as REST actions), snapshots
   (`/vm-snapshots` list/get/delete + `revert_snapshot`)
 - Resources: `vif`, `user`, `group`, `acl-role`, `acl-privilege`, `server`
   (CRUD + `connect`/`disconnect`), `alarm`, `message`, `task clear`
