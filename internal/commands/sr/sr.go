@@ -13,5 +13,7 @@ func NewCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newListCommand())
+	cmd.AddCommand(newScanCommand())
+	cmd.AddCommand(newReclaimSpaceCommand())
 	return cmd
 }
