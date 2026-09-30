@@ -350,9 +350,11 @@ func TestIntegrationVMLifecycle(t *testing.T) {
 	if _, err := run("vm", "delete", vmID, "--yes"); err != nil {
 		t.Fatalf("xo vm delete --yes: %v", err)
 	}
-	if out, err := run("vm", "get", vmID); err == nil {
-		t.Fatalf("the deleted VM must not be retrievable:\n%s", out)
-	} else if !strings.Contains(out, "not found") {
-		t.Fatalf("get on a deleted VM should report not found:\n%s", out)
+	// The root command silences errors, so the not-found message is on err,
+	// not in the (empty) output.
+	if _, err := run("vm", "get", vmID); err == nil {
+		t.Fatal("the deleted VM must not be retrievable")
+	} else if !strings.Contains(err.Error(), "not found") {
+		t.Fatalf("get on a deleted VM should report not found: %v", err)
 	}
 }
