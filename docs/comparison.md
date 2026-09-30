@@ -52,9 +52,11 @@ they diverge and that no other section states:
 | Gap                                                                                     | `xo-cli` | `xo` Go CLI |
 | --------------------------------------------------------------------------------------- | -------- | ----------- |
 | Call *any* server method (servers, users, groups, backups, VDI, VBD, PBD, …)             | ✅        | ⬜ (added resource by resource on top of the SDK) |
-| Pause / resume / suspend / delete a VM                                                  | ✅        | ⬜ (in SDK v2, not yet exposed)                  |
+| Pause / resume / suspend / delete a VM                                                  | ✅        | ⬜ (in SDK v2, not yet exposed — roadmap layer 1) |
 
-Legend: ✅ available — ⬜ not available.
+Legend: ✅ available — ⬜ not available. A finer-grained, layer-by-layer view of
+what is missing (and what already exists in the SDK) is in the
+[roadmap](development.md#roadmap).
 
 ## Summary
 
