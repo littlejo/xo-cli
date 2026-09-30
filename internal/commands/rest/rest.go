@@ -196,9 +196,9 @@ Examples:
 	flags.StringSliceVar(&params, flagParam, nil, `query parameter KEY=VALUE (repeatable)`)
 	flags.StringSliceVar(&headers, flagHeader, nil, `extra request header KEY: VALUE (repeatable)`)
 	flags.StringVarP(&query, flagQuery, "q", "", "JMESPath expression applied to the result, e.g. '[].name_label'")
-	// --yes (or $XO_YES) skips the confirmation; it is read via
+	// --yes (or $XOA_YES) skips the confirmation; it is read via
 	// cli.SkipConfirm, which sees both the flag and the environment variable.
-	flags.Bool(flagYes, false, "do not ask for confirmation (or set XO_YES=1)")
+	flags.Bool(flagYes, false, "do not ask for confirmation (or set XOA_YES=1)")
 	flags.BoolVarP(&include, flagInclude, "i", false, "print the status line and response headers on stderr")
 
 	return cmd

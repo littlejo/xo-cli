@@ -42,14 +42,14 @@ xo vm list --profile lab --query '[?power_state==`Running`].name_label'
 You can also select the profile with an environment variable:
 
 ```sh
-export XO_PROFILE=lab
+export XOA_PROFILE=lab
 xo vm list
 ```
 
 ## Features
 
 - Resource-oriented commands (`xo vm list`, `xo host list`, `xo template list`, `xo sr list`, `xo pool list`, …)
-- Multiple connection profiles, AWS-style (`--profile`, `$XO_PROFILE`)
+- Multiple connection profiles, AWS-style (`--profile`, `$XOA_PROFILE`)
 - Human-friendly default output plus `--output json|yaml|text` for scripting
 - AWS-CLI-like `--query` using [JMESPath](https://jmespath.org/)
 - `--insecure` escape hatch for self-signed / internal certificates

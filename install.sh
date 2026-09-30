@@ -4,15 +4,15 @@
 #   curl -fsSL https://raw.githubusercontent.com/littlejo/xo-gocli/main/install.sh | sh
 #
 # Override the default values with environment variables:
-#   XO_INSTALL_REPO   GitHub repository (owner/name), default littlejo/xo-gocli
-#   XO_INSTALL_VERSION  Specific version to install, default: latest release
-#   XO_INSTALL_DIR    Installation directory, default /usr/local/bin
+#   XOA_INSTALL_REPO   GitHub repository (owner/name), default littlejo/xo-gocli
+#   XOA_INSTALL_VERSION  Specific version to install, default: latest release
+#   XOA_INSTALL_DIR    Installation directory, default /usr/local/bin
 #                     (falls back to ~/.local/bin when not writable)
 
 set -eu
 
-REPO="${XO_INSTALL_REPO:-littlejo/xo-gocli}"
-INSTALL_DIR="${XO_INSTALL_DIR:-}"
+REPO="${XOA_INSTALL_REPO:-littlejo/xo-gocli}"
+INSTALL_DIR="${XOA_INSTALL_DIR:-}"
 
 err() {
     printf 'error: %s\n' "$*" >&2
@@ -44,7 +44,7 @@ detect_arch() {
 
 OS="$(detect_os)"
 ARCH="$(detect_arch)"
-VERSION="${XO_INSTALL_VERSION:-}"
+VERSION="${XOA_INSTALL_VERSION:-}"
 
 if [ -z "$VERSION" ]; then
     # -f makes curl fail on HTTP errors (e.g. no release yet); the resulting

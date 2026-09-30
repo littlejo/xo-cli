@@ -100,12 +100,12 @@ func readBody(r *http.Request) (string, error) {
 // isolateVM points the CLI at the fake server and a throwaway config file.
 func isolateVM(t *testing.T, url string) {
 	t.Helper()
-	t.Setenv("XO_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XO_PROFILE", "XO_ENDPOINT", "XO_TOKEN", "XO_USERNAME", "XO_PASSWORD", "XO_INSECURE", "XO_YES"} {
+	t.Setenv("XOA_CONFIG_FILE", t.TempDir()+"/config")
+	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE", "XOA_YES"} {
 		t.Setenv(key, "")
 	}
-	t.Setenv("XO_ENDPOINT", url)
-	t.Setenv("XO_TOKEN", "test-token")
+	t.Setenv("XOA_ENDPOINT", url)
+	t.Setenv("XOA_TOKEN", "test-token")
 }
 
 func newVMTestRoot() *cobra.Command {
@@ -284,17 +284,17 @@ func TestVMStopRequiresConfirmation(t *testing.T) {
 	}
 }
 
-// $XO_YES is the script counterpart of --yes: it skips the confirmation
+// $XOA_YES is the script counterpart of --yes: it skips the confirmation
 // without a terminal.
 
 func TestVMStopSkipsConfirmationWithEnvYes(t *testing.T) {
 	server := newActionServer(t)
 	defer server.Close()
 	isolateVM(t, server.URL)
-	t.Setenv("XO_YES", "1")
+	t.Setenv("XOA_YES", "1")
 
 	if _, err := runVM(t, "vm", "stop", "550e8400-e29b-41d4-a716-446655440001"); err != nil {
-		t.Fatalf("vm stop with XO_YES=1: %v", err)
+		t.Fatalf("vm stop with XOA_YES=1: %v", err)
 	}
 	req, _ := server.post()
 	if req.Path != "/rest/v0/vms/550e8400-e29b-41d4-a716-446655440001/actions/clean_shutdown" {

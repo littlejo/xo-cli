@@ -55,8 +55,8 @@ func runConfigureExpectError(t *testing.T, args ...string) string {
 
 func isolate(t *testing.T) {
 	t.Helper()
-	t.Setenv("XO_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XO_PROFILE", "XO_ENDPOINT", "XO_TOKEN", "XO_USERNAME", "XO_PASSWORD", "XO_INSECURE"} {
+	t.Setenv("XOA_CONFIG_FILE", t.TempDir()+"/config")
+	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE"} {
 		t.Setenv(key, "")
 	}
 }
@@ -121,8 +121,8 @@ func TestConfigureUsernamePassword(t *testing.T) {
 	}
 }
 
-// XO_ENDPOINT seeds the endpoint when --endpoint is not given, exactly like
-// XO_TOKEN/XO_USERNAME/XO_PASSWORD seed their fields.
+// XOA_ENDPOINT seeds the endpoint when --endpoint is not given, exactly like
+// XOA_TOKEN/XOA_USERNAME/XOA_PASSWORD seed their fields.
 
 func TestConfigureEndpointFromEnvironment(t *testing.T) {
 	isolate(t)
@@ -135,7 +135,7 @@ func TestConfigureEndpointFromEnvironment(t *testing.T) {
 		t.Fatalf("Load after configure: %v", err)
 	}
 	if cfg.Endpoint != "https://from-env.example.com" {
-		t.Fatalf("XO_ENDPOINT was not used as the endpoint: %+v", cfg)
+		t.Fatalf("XOA_ENDPOINT was not used as the endpoint: %+v", cfg)
 	}
 }
 
@@ -146,13 +146,13 @@ func TestConfigureEndpointFlagBeatsEnvironment(t *testing.T) {
 	runConfigure(t, "--endpoint", "https://from-flag.example.com", "--token", "secret")
 
 	// The stored profile must carry the flag value. Load would re-apply the
-	// XO_ENDPOINT runtime override, so clear it before checking the file.
+	// XOA_ENDPOINT runtime override, so clear it before checking the file.
 	t.Setenv(config.EnvEndpoint, "")
 	cfg, err := config.Load(config.DefaultProfile)
 	if err != nil {
 		t.Fatalf("Load after configure: %v", err)
 	}
 	if cfg.Endpoint != "https://from-flag.example.com" {
-		t.Fatalf("--endpoint must win over XO_ENDPOINT when storing: %+v", cfg)
+		t.Fatalf("--endpoint must win over XOA_ENDPOINT when storing: %+v", cfg)
 	}
 }

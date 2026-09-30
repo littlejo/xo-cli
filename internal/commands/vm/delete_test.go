@@ -121,13 +121,13 @@ func TestVMDeleteSkipsConfirmationWithEnvYes(t *testing.T) {
 	server := newDeleteServer(t)
 	defer server.Close()
 	isolateVM(t, server.URL)
-	t.Setenv("XO_YES", "1")
+	t.Setenv("XOA_YES", "1")
 
 	if _, err := runVM(t, "vm", "delete", "550e8400-e29b-41d4-a716-446655440001"); err != nil {
-		t.Fatalf("vm delete with XO_YES=1: %v", err)
+		t.Fatalf("vm delete with XOA_YES=1: %v", err)
 	}
 	if !server.hasDelete() {
-		t.Fatal("expected a DELETE request when XO_YES=1")
+		t.Fatal("expected a DELETE request when XOA_YES=1")
 	}
 }
 

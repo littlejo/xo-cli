@@ -137,7 +137,7 @@ func newShowCommand() *cobra.Command {
 		Short: "Show a configuration profile",
 		Long: `Show a stored configuration profile in full, including the token or
 password. Without a name, the selected profile is shown (--profile or
-$XO_PROFILE; the current profile when neither is set).
+$XOA_PROFILE; the current profile when neither is set).
 
 Examples:
   xo configure show
@@ -209,7 +209,7 @@ func newRemoveCommand() *cobra.Command {
 		Long: `Remove a stored configuration profile.
 
 This is a destructive operation and asks for confirmation unless --yes is
-given (or $XO_YES is set). When the removed profile was the current one,
+given (or $XOA_YES is set). When the removed profile was the current one,
 current falls back to the first remaining profile.
 
 Examples:
@@ -243,7 +243,7 @@ Examples:
 		},
 	}
 
-	cmd.Flags().Bool(flagYes, false, "do not ask for confirmation (or set XO_YES=1)")
+	cmd.Flags().Bool(flagYes, false, "do not ask for confirmation (or set XOA_YES=1)")
 	return cmd
 }
 
@@ -252,7 +252,7 @@ const flagYes = "yes"
 
 // confirm asks the user to confirm a destructive operation. When stdin is not
 // a terminal it refuses so that automation never blocks, forcing the caller to
-// pass --yes (or set $XO_YES).
+// pass --yes (or set $XOA_YES).
 func confirm(cmd *cobra.Command, message string) (bool, error) {
 	in := cmd.InOrStdin()
 	if !isTerminal(in) {

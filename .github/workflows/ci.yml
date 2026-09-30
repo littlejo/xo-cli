@@ -104,8 +104,8 @@ jobs:
 
       - name: Run functional tests against xo-api-sim
         env:
-          XO_TEST_URL: http://localhost:3001
-          XO_TEST_TOKEN: test-token
+          XOA_TEST_URL: http://localhost:3001
+          XOA_TEST_TOKEN: test-token
         run: |
           set -euo pipefail
           ( cd xo-api-sim && PORT=3001 AUTH_TOKEN=test-token node dist/index.js > /tmp/xo-api-sim.log 2>&1 & echo $! > /tmp/xo-api-sim.pid )

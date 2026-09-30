@@ -53,7 +53,7 @@ Requires Go 1.26+ (a [mise](https://mise.jdx.dev/) config is included) — see
 ## Configuration
 
 Profiles are stored in `~/.config/xo/config` (override the location with
-`$XO_CONFIG_FILE`). The file is written with `0600` permissions because it may
+`$XOA_CONFIG_FILE`). The file is written with `0600` permissions because it may
 hold credentials.
 
 ```yaml
@@ -66,7 +66,7 @@ profiles:
     # OR: insecure: true
 ```
 
-The active profile is resolved in this order: `--profile`, then `$XO_PROFILE`,
+The active profile is resolved in this order: `--profile`, then `$XOA_PROFILE`,
 then the file's `current` entry, then the `default` profile.
 
 ### `xo configure`
@@ -90,7 +90,7 @@ xo configure remove lab                        # destructive: asks unless --yes
 ```
 
 Values given with flags win over environment variables; unset values fall back
-to the environment (`XO_ENDPOINT`, `XO_TOKEN`, `XO_USERNAME`, `XO_PASSWORD`),
+to the environment (`XOA_ENDPOINT`, `XOA_TOKEN`, `XOA_USERNAME`, `XOA_PASSWORD`),
 then to an interactive prompt when stdin is a terminal.
 
 ### Environment variables
@@ -100,18 +100,18 @@ time:
 
 | Variable         | Purpose                                   |
 | ---------------- | ----------------------------------------- |
-| `XO_PROFILE`     | Select the active profile                 |
-| `XO_ENDPOINT`    | Xen Orchestra base URL                    |
-| `XO_TOKEN`       | Authentication token                      |
-| `XO_USERNAME`    | Username (alternative to a token)         |
-| `XO_PASSWORD`    | Password (alternative to a token)         |
-| `XO_INSECURE`    | Skip TLS certificate verification         |
-| `XO_YES`         | Skip confirmation prompts (like `--yes`)  |
-| `XO_CONFIG_FILE` | Location of the configuration file        |
+| `XOA_PROFILE`     | Select the active profile                 |
+| `XOA_ENDPOINT`    | Xen Orchestra base URL                    |
+| `XOA_TOKEN`       | Authentication token                      |
+| `XOA_USERNAME`    | Username (alternative to a token)         |
+| `XOA_PASSWORD`    | Password (alternative to a token)         |
+| `XOA_INSECURE`    | Skip TLS certificate verification         |
+| `XOA_YES`         | Skip confirmation prompts (like `--yes`)  |
+| `XOA_CONFIG_FILE` | Location of the configuration file        |
 
 Either a token, or a username + password, must be available to authenticate.
 
-`XO_YES` is meant for scripts and CI: `XO_YES=1 xo vm stop <id>` behaves like
+`XOA_YES` is meant for scripts and CI: `XOA_YES=1 xo vm stop <id>` behaves like
 `xo vm stop <id> --yes` without having to pass the flag everywhere.
 
 ### Insecure mode
@@ -120,7 +120,7 @@ For self-signed or internally-issued certificates:
 
 ```sh
 xo configure --profile lab --insecure          # stored in the profile
-XO_INSECURE=1 xo vm list                        # per invocation
+XOA_INSECURE=1 xo vm list                        # per invocation
 ```
 
 This disables certificate verification and is only appropriate for internal,
@@ -133,7 +133,7 @@ insecure mode is not enabled, the error points at this escape hatch.
 
 | Flag             | Description                                             |
 | ---------------- | ------------------------------------------------------- |
-| `-p`, `--profile`| Configuration profile to use (or `$XO_PROFILE`)         |
+| `-p`, `--profile`| Configuration profile to use (or `$XOA_PROFILE`)         |
 | `-o`, `--output` | Output format: `table` (default), `json`, `yaml`, `text`|
 | `--version`      | Print the CLI version and exit                          |
 
@@ -220,7 +220,7 @@ xo vm delete <id> --yes             # skip confirmation (automation)
 `--memory` accepts bytes or human-readable sizes (`2G`, `512M`).
 
 Destructive operations (`stop`, `delete`) require confirmation; pass `--yes`
-(or set `XO_YES`) to run non-interactively. Without either, a non-terminal
+(or set `XOA_YES`) to run non-interactively. Without either, a non-terminal
 stdin is rejected rather than hanging, so automation never blocks. The
 reversible actions (`pause`, `unpause`, `suspend`, `resume`) never prompt.
 

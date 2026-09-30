@@ -61,12 +61,12 @@ func fakeXO(t *testing.T, handler func(w http.ResponseWriter, r *http.Request)) 
 
 func isolatePointers(t *testing.T, url string) {
 	t.Helper()
-	t.Setenv("XO_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XO_PROFILE", "XO_ENDPOINT", "XO_TOKEN", "XO_USERNAME", "XO_PASSWORD", "XO_INSECURE"} {
+	t.Setenv("XOA_CONFIG_FILE", t.TempDir()+"/config")
+	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE"} {
 		t.Setenv(key, "")
 	}
-	t.Setenv("XO_ENDPOINT", url)
-	t.Setenv("XO_TOKEN", "test-token")
+	t.Setenv("XOA_ENDPOINT", url)
+	t.Setenv("XOA_TOKEN", "test-token")
 }
 
 func newTestRoot() *cobra.Command {
@@ -190,8 +190,8 @@ func TestPoolListAPIError(t *testing.T) {
 func TestPoolListNoCredentials(t *testing.T) {
 	server := fakeXO(t, nil)
 	defer server.Close()
-	t.Setenv("XO_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XO_PROFILE", "XO_ENDPOINT", "XO_TOKEN", "XO_USERNAME", "XO_PASSWORD", "XO_INSECURE"} {
+	t.Setenv("XOA_CONFIG_FILE", t.TempDir()+"/config")
+	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE"} {
 		t.Setenv(key, "")
 	}
 
