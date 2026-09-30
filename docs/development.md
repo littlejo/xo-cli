@@ -82,8 +82,8 @@ and deterministic fixtures). Integration tests are opt-in and only run when
 explicitly enabled:
 
 ```sh
-export XO_TEST_URL=https://xo.example.com
-export XO_TEST_TOKEN=<token>
+export XOA_TEST_URL=https://xo.example.com
+export XOA_TEST_TOKEN=<token>
 go test -tags=integration ./...
 ```
 
@@ -105,7 +105,7 @@ npm ci && npm run build
 PORT=3001 AUTH_TOKEN=test-token node dist/index.js
 
 # terminal 2: run the functional suite against it
-XO_TEST_URL=http://localhost:3001 XO_TEST_TOKEN=test-token go test -tags=integration ./...
+XOA_TEST_URL=http://localhost:3001 XOA_TEST_TOKEN=test-token go test -tags=integration ./...
 ```
 
 > Note: the SDK v2 client authenticates with an `authenticationToken` cookie,

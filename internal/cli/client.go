@@ -34,7 +34,7 @@ func Execute(ctx context.Context, root *cobra.Command, args []string) error {
 	return root.ExecuteContext(ctx)
 }
 
-// ProfileName returns the profile selected with --profile or $XO_PROFILE.
+// ProfileName returns the profile selected with --profile or $XOA_PROFILE.
 func ProfileName(cmd *cobra.Command) string {
 	name, _ := cmd.Flags().GetString(FlagProfile)
 	return name
@@ -47,7 +47,7 @@ func OutputFormat(cmd *cobra.Command) string {
 }
 
 // SkipConfirm reports whether destructive operations should run without a
-// confirmation prompt: either the --yes flag or the $XO_YES environment
+// confirmation prompt: either the --yes flag or the $XOA_YES environment
 // variable. The variable exists so scripts and CI pipelines can confirm
 // non-interactively without repeating --yes on every command; it is checked
 // only by confirmations, so setting it has no other effect.
@@ -55,7 +55,7 @@ func SkipConfirm(cmd *cobra.Command) bool {
 	if yes, _ := cmd.Flags().GetBool("yes"); yes {
 		return true
 	}
-	if v := os.Getenv("XO_YES"); v != "" {
+	if v := os.Getenv("XOA_YES"); v != "" {
 		return v == "1" || strings.EqualFold(v, "true") || strings.EqualFold(v, "yes")
 	}
 	return false
@@ -119,7 +119,7 @@ func InsecureHint(msg string, alreadyInsecure bool) error {
 	if alreadyInsecure || !isTLSVerifyError(msg) {
 		return errors.New(msg)
 	}
-	return errors.New(msg + "\n\nthe server certificate could not be verified; if this is a self-signed or internal certificate, retry with 'xo configure --insecure' (or set XO_INSECURE=1)")
+	return errors.New(msg + "\n\nthe server certificate could not be verified; if this is a self-signed or internal certificate, retry with 'xo configure --insecure' (or set XOA_INSECURE=1)")
 }
 
 // cleanSDKArtifact removes the trailing "%!(EXTRA ...)" marker that the Go

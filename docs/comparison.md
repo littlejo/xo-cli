@@ -16,7 +16,7 @@ How each tool feels when driven by hand:
 | Aspect               | `xo-cli` (Node.js)                                                              | `xo` Go CLI (this project)                                                                             |
 | -------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Command model        | Dynamic: `xo-cli <method> <param>=<value>` for **every** server method, discovered at runtime (`list-commands`) | Static, resource-oriented: `xo <resource> <operation>`, discovered via `--help`                        |
-| Configuration        | Single registered instance (`xo-cli register` / `unregister`), token stored only, `--url` per-invocation override | Multiple named profiles (`xo configure --profile`), `$XO_PROFILE` / `XO_*` env vars, 0600 config file  |
+| Configuration        | Single registered instance (`xo-cli register` / `unregister`), token stored only, `--url` per-invocation override | Multiple named profiles (`xo configure --profile`), `$XOA_PROFILE` / `XOA_*` env vars, 0600 config file  |
 | Authentication       | username/password, token, OTP (`--otp`), token validity control (`--expiresIn`) | username/password or token (via SDK v2)                                                                 |
 | Object listing       | `list-objects` on all object types, with property filters; a single object needs `rest get vms/<id>` | Typed `list` per resource (`vm`, `host`, `pool`, `sr`, `network`, `task`, `template`) with `--limit` and resource filters (`--power-state`, `--type`, `--status`); single object via `xo <resource> get <id>` |
 | Output formats       | Plain text or `--json`                                                          | `table` (default), `json`, `yaml`, `text`                                                               |
@@ -28,7 +28,7 @@ How each tool feels when driven by hand:
 | Live events          | `xo-cli watch [--ndjson]` (stream of notifications)                             | Not implemented                                                                                         |
 | Raw REST escape hatch | `xo-cli rest get/post/patch/put/del` for any endpoint                          | `xo rest <method> <path>` (on top of SDK v2 HTTP facilities, not a second client)                       |
 | Destructive operations | No confirmation prompt                                                         | Confirmation prompt + non-interactive `--yes`                                                           |
-| TLS                  | `--allowUnauthorized` / `--au`                                                  | `--insecure` flag, per profile, or `$XO_INSECURE`                                                       |
+| TLS                  | `--allowUnauthorized` / `--au`                                                  | `--insecure` flag, per profile, or `$XOA_INSECURE`                                                       |
 
 ## For the developer
 
@@ -41,7 +41,7 @@ Automation, CI pipelines, and building on top of the CLI:
 | Parameters        | Untyped `param=value`, JSON values via `json:` prefix — mistakes surface at run time | Typed flags per command, validated at parse time                                        |
 | Destructive in CI | No prompt: nothing blocks, but nothing protects either                | `--yes` for scripts; without it a non-terminal stdin is **rejected** rather than hanging, so a pipeline can never block or accidentally destroy |
 | Machine-readable output | `--json` flag                                        | `--output json` / `yaml`; only the requested data goes to stdout, errors to stderr — `xo vm list --output json \| jq …` always works |
-| Credentials in CI | Token stored by `register`                                            | `XO_ENDPOINT` / `XO_TOKEN` / … env vars override the profile per invocation — no config file to write or leak |
+| Credentials in CI | Token stored by `register`                                            | `XOA_ENDPOINT` / `XOA_TOKEN` / … env vars override the profile per invocation — no config file to write or leak |
 | Testing the CLI itself | Upstream tests only                                        | Unit tests (httptest fixtures) + opt-in integration tests against a live XO + a functional suite against the REST simulator, all in CI |
 
 ## Remaining coverage gaps

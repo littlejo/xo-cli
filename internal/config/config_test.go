@@ -9,7 +9,7 @@ import (
 func isolateConfig(t *testing.T) string {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "config")
-	t.Setenv("XO_CONFIG_FILE", path)
+	t.Setenv("XOA_CONFIG_FILE", path)
 	// Clear any environment overrides so tests are deterministic.
 	for _, key := range []string{EnvProfile, EnvEndpoint, EnvToken, EnvUsername, EnvPassword, EnvInsecure} {
 		t.Setenv(key, "")
@@ -116,12 +116,12 @@ func TestProfileFromEnvironment(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 	if cfg.Name != "prod" || cfg.Endpoint != "https://prod.example.com" {
-		t.Fatalf("XO_PROFILE was not honored: %+v", cfg)
+		t.Fatalf("XOA_PROFILE was not honored: %+v", cfg)
 	}
 }
 
 // The file's current profile is the fallback used when neither --profile nor
-// $XO_PROFILE selects one (AWS CLI style), after the default profile is not a
+// $XOA_PROFILE selects one (AWS CLI style), after the default profile is not a
 // valid fallback when a current marker exists.
 
 func TestCurrentProfileFromFile(t *testing.T) {
@@ -176,7 +176,7 @@ func TestEnvProfileWinsOverCurrent(t *testing.T) {
 		t.Fatalf("Load: %v", err)
 	}
 	if cfg.Name != "ci" {
-		t.Fatalf("$XO_PROFILE must win over the current marker: %+v", cfg)
+		t.Fatalf("$XOA_PROFILE must win over the current marker: %+v", cfg)
 	}
 }
 

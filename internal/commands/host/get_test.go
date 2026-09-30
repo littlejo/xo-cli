@@ -196,13 +196,13 @@ func TestHostGetTLSErrorNoHintWhenInsecureOn(t *testing.T) {
 	server := tlsFailServer()
 	defer server.Close()
 	isolatePointers(t, server.URL)
-	t.Setenv("XO_INSECURE", "1")
+	t.Setenv("XOA_INSECURE", "1")
 
 	_, err := runGet(t, "get", "aaaaaaaa-bbbb-cccc-dddd-000000000001")
 	if err == nil {
 		t.Fatal("expected an error from the failing API")
 	}
 	if strings.Contains(err.Error(), "--insecure") {
-		t.Fatalf("no hint expected when XO_INSECURE=1: %v", err)
+		t.Fatalf("no hint expected when XOA_INSECURE=1: %v", err)
 	}
 }

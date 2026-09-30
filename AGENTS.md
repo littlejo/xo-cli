@@ -424,7 +424,7 @@ xo vm list --profile production
 and preferably:
 
 ```bash
-export XO_PROFILE=production
+export XOA_PROFILE=production
 ```
 
 Configuration should contain only CLI-level configuration.
@@ -919,8 +919,8 @@ variables or an explicit configuration file that is excluded from git.
 
 For example:
 
-    XO_TEST_URL
-    XO_TEST_TOKEN
+    XOA_TEST_URL
+    XOA_TEST_TOKEN
 
 Do not require a live XO instance as a prerequisite for:
 

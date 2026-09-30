@@ -97,12 +97,12 @@ func (s *fakeXO) last() restRequest {
 
 func isolate(t *testing.T, url string) {
 	t.Helper()
-	t.Setenv("XO_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XO_PROFILE", "XO_ENDPOINT", "XO_TOKEN", "XO_USERNAME", "XO_PASSWORD", "XO_INSECURE", "XO_YES"} {
+	t.Setenv("XOA_CONFIG_FILE", t.TempDir()+"/config")
+	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE", "XOA_YES"} {
 		t.Setenv(key, "")
 	}
-	t.Setenv("XO_ENDPOINT", url)
-	t.Setenv("XO_TOKEN", "test-token")
+	t.Setenv("XOA_ENDPOINT", url)
+	t.Setenv("XOA_TOKEN", "test-token")
 }
 
 func newTestRoot() *cobra.Command {
@@ -444,16 +444,16 @@ func TestRestDeleteRequiresConfirmation(t *testing.T) {
 	}
 }
 
-// XO_YES is the script counterpart of --yes for rest delete.
+// XOA_YES is the script counterpart of --yes for rest delete.
 
 func TestRestDeleteSkipsConfirmationWithEnvYes(t *testing.T) {
 	server := newFakeXO(t)
 	defer server.Close()
 	isolate(t, server.URL)
-	t.Setenv("XO_YES", "1")
+	t.Setenv("XOA_YES", "1")
 
 	if _, err := run(t, "rest", "delete", "vms/aaaa-1111"); err != nil {
-		t.Fatalf("rest delete with XO_YES=1: %v", err)
+		t.Fatalf("rest delete with XOA_YES=1: %v", err)
 	}
 	req := server.last()
 	if req.Method != http.MethodDelete || req.Path != "/rest/v0/vms/aaaa-1111" {
@@ -496,8 +496,8 @@ func TestRestMethodIsCaseInsensitive(t *testing.T) {
 func TestRestNoCredentials(t *testing.T) {
 	server := newFakeXO(t)
 	defer server.Close()
-	t.Setenv("XO_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XO_PROFILE", "XO_ENDPOINT", "XO_TOKEN", "XO_USERNAME", "XO_PASSWORD", "XO_INSECURE"} {
+	t.Setenv("XOA_CONFIG_FILE", t.TempDir()+"/config")
+	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE"} {
 		t.Setenv(key, "")
 	}
 

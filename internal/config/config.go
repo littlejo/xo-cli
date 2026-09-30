@@ -15,17 +15,17 @@ import (
 
 const (
 	// EnvProfile selects the active profile (like AWS_PROFILE).
-	EnvProfile = "XO_PROFILE"
+	EnvProfile = "XOA_PROFILE"
 	// EnvEndpoint overrides the profile endpoint.
-	EnvEndpoint = "XO_ENDPOINT"
+	EnvEndpoint = "XOA_ENDPOINT"
 	// EnvToken overrides the profile authentication token.
-	EnvToken = "XO_TOKEN"
+	EnvToken = "XOA_TOKEN"
 	// EnvUsername overrides the profile username.
-	EnvUsername = "XO_USERNAME"
+	EnvUsername = "XOA_USERNAME"
 	// EnvPassword overrides the profile password.
-	EnvPassword = "XO_PASSWORD"
+	EnvPassword = "XOA_PASSWORD"
 	// EnvInsecure overrides the profile insecure flag.
-	EnvInsecure = "XO_INSECURE"
+	EnvInsecure = "XOA_INSECURE"
 )
 
 // DefaultProfile is used when no profile is selected.
@@ -61,7 +61,7 @@ type ClientConfig struct {
 // returns the resolved profile named profileName.
 //
 // Profile selection follows the AWS CLI precedence: an explicit profile name
-// (flag) wins, then $XO_PROFILE, then the file's current profile, then the
+// (flag) wins, then $XOA_PROFILE, then the file's current profile, then the
 // default profile.
 func Load(profileName string) (*ClientConfig, error) {
 	file, err := read()
@@ -261,9 +261,9 @@ func Remove(name string) (string, error) {
 }
 
 // Path returns the location of the configuration file, honoring the
-// XO_CONFIG_FILE environment variable used by the tests.
+// XOA_CONFIG_FILE environment variable used by the tests.
 func Path() (string, error) {
-	if p := os.Getenv("XO_CONFIG_FILE"); p != "" {
+	if p := os.Getenv("XOA_CONFIG_FILE"); p != "" {
 		return p, nil
 	}
 	home, err := os.UserHomeDir()
