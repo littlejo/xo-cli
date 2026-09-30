@@ -106,7 +106,8 @@ internal/
 
 This is the result of inspecting `xenorchestra-go-sdk` (pinned in `go.mod`)
 before implementing each command, per the SDK-first rule in
-[AGENTS.md](../AGENTS.md). Keep it updated when the SDK moves.
+[AGENTS.md](../AGENTS.md). The AGENTS.md *SDK versioning* checklist requires
+this section to be refreshed whenever the SDK is upgraded.
 
 ### Module layout
 
