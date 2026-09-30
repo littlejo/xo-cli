@@ -240,6 +240,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 | No typed service for `vm-templates`, tasks or user tokens | `TypedGet` directly (`xo template`, `xo task`, `xo token`) |
 | `users/me` 307-redirects to the user id | handled by `net/http` following the redirect; `doTokensRequest` relies on 307 body replay for POST |
 | `v2` package `init()` runs `gotenv.Load()` (reads a `.env` in the CWD) | harmless: we build the config with `NewWithValues`, which reads no env vars |
+| Server XO version is not exposed by the REST API (v0) — `GET /ping` only returns `{result, timestamp}` and the `xoa` REST controller has no version route | `xo version` prints the **CLI** version offline (like `aws version`); the server version exists only as the legacy JSON-RPC `getServerVersion` method, which the CLI never calls (v1 is forbidden by AGENTS.md) |
 
 ### Which command uses which SDK surface
 
@@ -251,6 +252,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 | `template list/get`, `task list/get` | raw `client.TypedGet` |
 | `token list/get/create` | raw `*client.Client` (GET/POST, 307 redirect) |
 | `rest` | raw `*client.Client` (full method set) |
+| `version` | none (offline — prints the CLI version only) |
 
 ## Roadmap
 
