@@ -332,6 +332,94 @@ func TestVMRebootHard(t *testing.T) {
 	}
 }
 
+// --- pause / unpause / suspend / resume -------------------------------------
+
+func TestVMPause(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	out, err := runVM(t, "vm", "pause", "550e8400-e29b-41d4-a716-446655440001")
+	if err != nil {
+		t.Fatalf("vm pause: %v", err)
+	}
+	if !strings.Contains(out, "pause") || !strings.Contains(out, "web-01") || !strings.Contains(out, "task-123") {
+		t.Fatalf("unexpected pause output: %q", out)
+	}
+	req, ok := server.post()
+	if !ok {
+		t.Fatal("expected a POST action request")
+	}
+	if req.Path != "/rest/v0/vms/550e8400-e29b-41d4-a716-446655440001/actions/pause" {
+		t.Fatalf("unexpected action path: %s", req.Path)
+	}
+}
+
+func TestVMUnpause(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	if _, err := runVM(t, "vm", "unpause", "550e8400-e29b-41d4-a716-446655440001"); err != nil {
+		t.Fatalf("vm unpause: %v", err)
+	}
+	req, _ := server.post()
+	if req.Path != "/rest/v0/vms/550e8400-e29b-41d4-a716-446655440001/actions/unpause" {
+		t.Fatalf("unexpected action path: %s", req.Path)
+	}
+}
+
+func TestVMSuspend(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	if _, err := runVM(t, "vm", "suspend", "550e8400-e29b-41d4-a716-446655440001"); err != nil {
+		t.Fatalf("vm suspend: %v", err)
+	}
+	req, _ := server.post()
+	if req.Path != "/rest/v0/vms/550e8400-e29b-41d4-a716-446655440001/actions/suspend" {
+		t.Fatalf("unexpected action path: %s", req.Path)
+	}
+}
+
+func TestVMResume(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	if _, err := runVM(t, "vm", "resume", "550e8400-e29b-41d4-a716-446655440001"); err != nil {
+		t.Fatalf("vm resume: %v", err)
+	}
+	req, _ := server.post()
+	if req.Path != "/rest/v0/vms/550e8400-e29b-41d4-a716-446655440001/actions/resume" {
+		t.Fatalf("unexpected action path: %s", req.Path)
+	}
+}
+
+// These four are reversible, so unlike stop/delete they must run without any
+// confirmation even when stdin is not a terminal.
+
+func TestVMPauseRequiresNoConfirmation(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	if _, err := runVM(t, "vm", "pause", "550e8400-e29b-41d4-a716-446655440001"); err != nil {
+		t.Fatalf("pause must not require confirmation: %v", err)
+	}
+}
+
+func TestVMSuspendRequiresNoConfirmation(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	if _, err := runVM(t, "vm", "suspend", "550e8400-e29b-41d4-a716-446655440001"); err != nil {
+		t.Fatalf("suspend must not require confirmation: %v", err)
+	}
+}
+
 // --- snapshot ---------------------------------------------------------------
 
 func TestVMSnapshot(t *testing.T) {

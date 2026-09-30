@@ -22,7 +22,7 @@ How each tool feels when driven by hand:
 | Output formats       | Plain text or `--json`                                                          | `table` (default), `json`, `yaml`, `text`                                                               |
 | Filtering / projection | `filter=` / `fields=` parameters (XO filter syntax)                           | AWS-CLI-like `--query` with JMESPath (incl. backtick literals)                                          |
 | Task management      | `rest get tasks/<id> wait[=result]`, `rest post tasks/<id>/actions/abort`       | `task list` / `task get` (list filterable by `--status`); lifecycle actions return the task id          |
-| VM lifecycle         | All methods (`vm.start`, `vm.stop`, `vm.reboot`, `vm.pause`, …)                 | `create`, `start` (host pinning), `stop` (clean/hard, confirm + `--yes`), `reboot` (clean/hard), `snapshot`, `tag add/remove`, `update` (name/description/tags) |
+| VM lifecycle         | All methods (`vm.start`, `vm.stop`, `vm.reboot`, `vm.pause`, …)                 | `create`, `start` (host pinning), `stop` (clean/hard, confirm + `--yes`), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete` (confirm + `--yes`), `tag add/remove`, `update` (name/description/tags) |
 | VM import / export (XVA) | `vm.import` / `vm.export` (file streaming with `@=`)                        | Not implemented (SDK v2 exposes VDI import/export)                                                      |
 | Token management     | `create-token` (accepts same params as `register`)                              | `token list / get / create` with secret masking in output                                               |
 | Live events          | `xo-cli watch [--ndjson]` (stream of notifications)                             | Not implemented                                                                                         |
@@ -52,7 +52,6 @@ they diverge and that no other section states:
 | Gap                                                                                     | `xo-cli` | `xo` Go CLI |
 | --------------------------------------------------------------------------------------- | -------- | ----------- |
 | Call *any* server method (servers, users, groups, backups, VDI, VBD, PBD, …)             | ✅        | ⬜ (added resource by resource on top of the SDK) |
-| Pause / resume / suspend / delete a VM                                                  | ✅        | ⬜ (in SDK v2, not yet exposed — roadmap layer 1) |
 
 Legend: ✅ available — ⬜ not available. A finer-grained, layer-by-layer view of
 what is missing (and what already exists in the SDK) is in the
@@ -69,8 +68,7 @@ what is missing (and what already exists in the SDK) is in the
   destructive operations, a static binary, and a REST-only architecture with
   no JSON-RPC/WebSocket dependency — better suited for automation, CI, and
   shell scripting.
-- **What is still missing** (roadmap): `watch`, VM import/export, the
-  remaining VM lifecycle operations (`delete`, `pause`, `resume`, `suspend`),
-  and more resources (VDI, VBD, servers, users, groups, backups). These are
-  added as they are exposed by the Go SDK v2, per the
+- **What is still missing** (roadmap): `watch`, VM import/export, and more
+  resources (VDI, VBD, servers, users, groups, backups). These are added as
+  they are exposed by the Go SDK v2, per the
   [architecture rules](../AGENTS.md).

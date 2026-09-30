@@ -222,7 +222,10 @@ v1.19.0 version number is the *module* version, not the REST API version
 - Single object: `GET /<resource>/<id>`.
 - Actions: `POST /<resource>/<id>/actions/<name>` → `{"taskId": …}` (202,
   asynchronous); e.g. `start`, `clean_shutdown`, `hard_shutdown`,
-  `clean_reboot`, `hard_reboot`, `snapshot`.
+  `clean_reboot`, `hard_reboot`, `pause`, `unpause`, `suspend`, `resume`,
+  `snapshot`.
+- Delete: `DELETE /<resource>/<id>` → `{"success": true}` (synchronous, no
+  task id); e.g. `DELETE /vms/<id>`.
 - Tags: `PUT`/`DELETE /vms/<id>/tags/<tag>`.
 - Partial update: `PATCH /<resource>/<id>` with **camelCase** JSON fields
   (`nameLabel`, `nameDescription`, …) — responses, in contrast, use
@@ -246,7 +249,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 
 | Command | SDK surface |
 | ------- | ----------- |
-| `vm list/get/create/start/stop/reboot/snapshot/tag` | typed `library.VM` |
+| `vm list/get/create/start/stop/reboot/pause/unpause/suspend/resume/snapshot/delete/tag` | typed `library.VM` |
 | `host/pool/sr/network list/get` | typed `library.{Host,Pool,SR,Network}` |
 | `vm update` | raw `*client.Client` (PATCH — SDK gap) |
 | `template list/get`, `task list/get` | raw `client.TypedGet` |
@@ -260,7 +263,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 
 - `xo configure` + named profiles (with environment overrides)
 - `list` / `get` for `vm`, `host`, `pool`, `sr`, `network`, `task`, `template`, `token`
-- VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `snapshot`, `update`, `tag add/remove`
+- VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete`, `update`, `tag add/remove`
 - `xo rest` raw REST escape hatch on top of the SDK v2 HTTP facilities
 
 The remainder is organized in four layers. The deeper a layer, the more it
@@ -277,8 +280,6 @@ service method (the same pattern as the current commands):
 | `xo task wait <id>` (+ `--timeout`) | `Task().Wait` / `WaitWithTimeout` (2 s polling, context-aware) |
 | `xo task abort <id>` | `Task().Abort` |
 | `--wait` on async actions (`vm start`, …) | `Task().HandleTaskResponse(ctx, resp, true)` |
-| `xo vm delete <id>` | `VM().Delete` |
-| `xo vm pause / unpause / suspend / resume` | `VM().Pause / Unpause / Suspend / Resume` |
 | `xo vm vdis <id>` | `VM().GetVDIs` |
 | `xo sr scan <id>` / `xo sr reclaim-space <id>` | `SR().Scan / ReclaimSpace` |
 | `xo host / pool / sr / network tag add\|remove` | `Taggable`, implemented by all four services (tag endpoints `PUT`/`DELETE /<resource>/<id>/tags/<tag>`) |

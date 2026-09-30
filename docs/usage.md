@@ -199,7 +199,7 @@ xo vm update <id> --tags production,web     # replaces the full tag list
 xo vm tag add <id> production
 xo vm tag remove <id> production
 
-# Lifecycle (all return an async task id)
+# Lifecycle (async actions return a task id; delete is synchronous)
 xo vm start <id>                    # power on
 xo vm start <id> --host <host-id>   # pin to a host
 xo vm stop <id>                     # clean shutdown (asks to confirm)
@@ -207,15 +207,22 @@ xo vm stop <id> --hard              # power off immediately
 xo vm stop <id> --yes               # skip confirmation (automation)
 xo vm reboot <id>                   # clean reboot
 xo vm reboot <id> --hard            # force a hard reboot
+xo vm pause <id>                    # pause the vCPUs (state: Paused)
+xo vm unpause <id>                  # resume a paused VM
+xo vm suspend <id>                  # save to disk and release memory (state: Suspended)
+xo vm resume <id>                   # restore a suspended VM
 xo vm snapshot <id>                 # take a snapshot
 xo vm snapshot <id> --name backup   # label the snapshot
+xo vm delete <id>                   # delete the VM (asks to confirm)
+xo vm delete <id> --yes             # skip confirmation (automation)
 ```
 
 `--memory` accepts bytes or human-readable sizes (`2G`, `512M`).
 
-Destructive operations (`stop`) require confirmation; pass `--yes` (or set
-`XO_YES`) to run non-interactively. Without either, a non-terminal stdin is
-rejected rather than hanging, so automation never blocks.
+Destructive operations (`stop`, `delete`) require confirmation; pass `--yes`
+(or set `XO_YES`) to run non-interactively. Without either, a non-terminal
+stdin is rejected rather than hanging, so automation never blocks. The
+reversible actions (`pause`, `unpause`, `suspend`, `resume`) never prompt.
 
 ### `xo host`
 
