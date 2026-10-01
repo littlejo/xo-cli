@@ -35,6 +35,7 @@ Configure a profile first with 'xo configure'.`,
 	root.PersistentFlags().StringP(cli.FlagProfile, "p", "", "name of the configuration profile to use (or $XOA_PROFILE)")
 	root.PersistentFlags().StringP(cli.FlagOutput, "o", "table", "output format: table, json, yaml, text")
 	root.PersistentFlags().BoolP(cli.FlagDebug, "d", false, "show SDK/API error details on failure (or $XOA_DEBUG)")
+	root.PersistentFlags().Duration(cli.FlagTimeout, 0, "HTTP client timeout, e.g. 60s or 2m (default 30s, or $XOA_TIMEOUT)")
 
 	root.AddCommand(configure.NewCommand())
 	root.AddCommand(newVersionCommand())

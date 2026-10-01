@@ -108,6 +108,7 @@ time:
 | `XOA_USERNAME`    | Username (alternative to a token)             |
 | `XOA_PASSWORD`    | Password (alternative to a token)             |
 | `XOA_INSECURE`    | Skip TLS certificate verification             |
+| `XOA_TIMEOUT`     | HTTP client timeout, e.g. `60s` or `2m` (like `--timeout`) |
 | `XOA_YES`         | Skip confirmation prompts (like `--yes`)      |
 | `XOA_DEBUG`       | Show SDK/API error details (like `--debug`)   |
 | `XOA_CONFIG_FILE` | Location of the configuration file            |
@@ -153,6 +154,24 @@ Error: VM "550e8400-…" not found
 Use it when a failure is hard to explain (a 404 you expected to succeed, a
 weird API body, the wrong endpoint reached) and file the output upstream.
 
+### Request timeout
+
+Every command runs with an HTTP client timeout of **30 seconds** by default —
+the value the SDK applies when none is given. Long-running operations that
+wait for a backing task (a pool `rolling-update`, a large VM `export`) or slow
+links can exceed that, in which case the request is cut off with a `timeout`
+error. Raise it with the global `--timeout` flag (a Go duration) or the
+`$XOA_TIMEOUT` environment variable for scripts:
+
+```sh
+xo pool rolling-update <id> --timeout 10m      # a pool update can run long
+XOA_TIMEOUT=5m xo vm export <id> -o vm.xva      # large XVA over a slow link
+```
+
+The flag wins over the environment variable. The timeout bounds the whole
+operation, not only a single request, because the command waits for the task
+to complete.
+
 ## Commands
 
 ### Global flags
@@ -162,6 +181,7 @@ weird API body, the wrong endpoint reached) and file the output upstream.
 | `-p`, `--profile`| Configuration profile to use (or `$XOA_PROFILE`)         |
 | `-o`, `--output` | Output format: `table` (default), `json`, `yaml`, `text`|
 | `-d`, `--debug`  | Show SDK/API error details on failure (or `$XOA_DEBUG`) |
+| `--timeout`      | HTTP client timeout, e.g. `60s` or `2m` (default `30s`, or `$XOA_TIMEOUT`) |
 | `--version`      | Print the CLI version and exit                          |
 
 Commands that return data also accept `--query` / `-q`

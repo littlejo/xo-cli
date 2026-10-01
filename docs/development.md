@@ -210,8 +210,10 @@ v1.19.0 version number is the *module* version, not the REST API version
   `POST /auth/login` (base URL **without** `/rest/v0`) and keeps the token
   cookie from the response.
 - `ws`/`wss` endpoints are transparently rewritten to `http(s)`;
-  `InsecureSkipVerify` is applied on a cloned transport; default HTTP timeout
-  is 30 s (`cfg.ClientTimeout`).
+  `InsecureSkipVerify` is applied on a cloned transport; the HTTP client
+  timeout is 30 s by default (`cfg.ClientTimeout`), overridable per
+  invocation with the global `--timeout` flag or `$XOA_TIMEOUT` (wired to
+  `ClientTimeout` in `internal/cli.buildSDKConfig`).
 - `v2/xo.go` also holds a **lazy** v1 client (`V1Client()`), created only if
   JSON-RPC is actually requested. The CLI never calls it, so no WebSocket is
   ever opened.
@@ -291,6 +293,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 - `vdi list/get/create/delete` and `vbd list/get/create/delete` + `connect`/`disconnect` — VDI and VBD are first-class resources (enables the "add a disk to a VM" use case)
 - `xo rest` raw REST escape hatch on top of the SDK v2 HTTP facilities
 - `-d`, `--debug` global flag (+ `$XOA_DEBUG`): reveals the raw SDK/API error and the resolved profile/endpoint behind a concise failure
+- `--timeout` global flag (+ `$XOA_TIMEOUT`): overrides the SDK's 30-second HTTP client timeout for long-running operations
 
 The remainder is organized in four layers. The deeper a layer, the more it
 depends on SDK work (see the
@@ -344,7 +347,6 @@ meantime, per the SDK-first rule):
 - Widen `xo vm create` beyond `--memory`/`--boot` (affinity, autoPoweron,
   clone, cloudConfig, install, extra VDIs/VIFs — all in `CreateVMParams`)
 - Widen `xo vm update` beyond name/description/tags
-- `--timeout` global flag (the SDK currently hard-codes 30 s)
 
 ### SDK bug to verify upstream
 
