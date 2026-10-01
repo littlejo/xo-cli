@@ -53,6 +53,7 @@ xo vm list
 - Human-friendly default output plus `--output json|yaml|text` for scripting
 - AWS-CLI-like `--query` using [JMESPath](https://jmespath.org/)
 - `--insecure` escape hatch for self-signed / internal certificates
+- Concise errors by default; `-d`/`--debug` (or `$XOA_DEBUG`) reveals the raw SDK/API error on failure
 - Static, dependency-free binaries (releases are built for the common 64-bit platforms)
 
 ## Documentation

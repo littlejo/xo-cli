@@ -105,10 +105,7 @@ func runDelete(cmd *cobra.Command, idStr string, yes bool) error {
 	}
 	vbd, err := xo.VBD().Get(ctx, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return fmt.Errorf("VBD %q not found", idStr)
-		}
-		return cli.InsecureHint(fmt.Sprintf("cannot resolve VBD %q: %v", idStr, err), cfg.Insecure)
+		return cli.NotFound("VBD", "resolve", idStr, err, cfg.Insecure)
 	}
 	label := describe(vbd)
 

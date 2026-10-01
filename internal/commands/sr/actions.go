@@ -3,7 +3,6 @@ package sr
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/spf13/cobra"
@@ -52,10 +51,7 @@ func runAction(cmd *cobra.Command, spec actionSpec) error {
 	}
 	name, err := nameOf(ctx, xo, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return fmt.Errorf("SR %q not found", spec.id)
-		}
-		return cli.InsecureHint(fmt.Sprintf("cannot resolve SR %q: %v", spec.id, err), cfg.Insecure)
+		return cli.NotFound("SR", "resolve", spec.id, err, cfg.Insecure)
 	}
 
 	taskID, err := spec.perform(ctx, xo, id)

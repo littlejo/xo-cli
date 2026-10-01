@@ -67,13 +67,10 @@ Examples:
 	return cmd
 }
 
-// taskNotFound turns a lookup failure into the concise "task not found" form
-// when the API returned a 404, and keeps the original error otherwise.
+// taskNotFound delegates to cli.NotFound, which reports a 404 concisely and
+// keeps the raw API error as debug detail.
 func taskNotFound(id string, err error, insecure bool) error {
-	if err != nil && strings.Contains(err.Error(), "404") {
-		return fmt.Errorf("task %q not found", id)
-	}
-	return cli.InsecureHint(fmt.Sprintf("cannot get task %q: %v", id, err), insecure)
+	return cli.NotFound("task", "get", id, err, insecure)
 }
 
 // renderTask renders a single task in the requested format. The human format

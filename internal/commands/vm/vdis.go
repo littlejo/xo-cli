@@ -70,10 +70,7 @@ Examples:
 			// Existence check through the typed service so a missing VM fails
 			// with the usual "not found" error before listing its disks.
 			if _, err := xo.VM().GetByID(cmd.Context(), id); err != nil {
-				if isNotFound(err) {
-					return fmt.Errorf("VM %q not found", args[0])
-				}
-				return cli.InsecureHint(fmt.Sprintf("cannot resolve VM %q: %v", args[0], err), cfg.Insecure)
+				return cli.NotFound("VM", "resolve", args[0], err, cfg.Insecure)
 			}
 
 			vdis, err := xo.VM().GetVDIs(cmd.Context(), id, limit, filter)

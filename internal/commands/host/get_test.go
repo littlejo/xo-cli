@@ -58,6 +58,7 @@ func newGetTestRoot() *cobra.Command {
 	}
 	root.PersistentFlags().String(cli.FlagProfile, "", "")
 	root.PersistentFlags().String(cli.FlagOutput, "table", "")
+	root.PersistentFlags().BoolP(cli.FlagDebug, "d", false, "")
 	root.AddCommand(newGetCommand())
 	return root
 }
@@ -71,6 +72,18 @@ func runGet(t *testing.T, args ...string) (string, error) {
 	root.SetArgs(args)
 	err := root.ExecuteContext(context.Background())
 	return out.String(), err
+}
+
+// runGetExec drives the command through cli.Execute (like the real binary),
+// so the global --debug handling on its error path is exercised. It returns
+// whatever was written to stderr.
+func runGetExec(t *testing.T, args ...string) (string, error) {
+	t.Helper()
+	root := newGetTestRoot()
+	var errOut strings.Builder
+	root.SetErr(&errOut)
+	err := cli.Execute(context.Background(), root, args)
+	return errOut.String(), err
 }
 
 func TestHostGetTable(t *testing.T) {
@@ -136,6 +149,48 @@ func TestHostGetNotFound(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), `host "aaaaaaaa-bbbb-cccc-dddd-000000000001" not found`) {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestHostGetNotFoundDebugRevealsAPIError(t *testing.T) {
+	server := fakeXOGet(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = fmt.Fprint(w, `{"message":"not found"}`)
+	})
+	defer server.Close()
+	isolatePointers(t, server.URL)
+
+	errOut, err := runGetExec(t, "get", "aaaaaaaa-bbbb-cccc-dddd-000000000001", "--debug")
+	if err == nil {
+		t.Fatal("expected an error when the host does not exist")
+	}
+	// The concise message must stay the user-facing error …
+	if !strings.Contains(err.Error(), `host "aaaaaaaa-bbbb-cccc-dddd-000000000001" not found`) {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	// … while --debug adds the raw API error and the resolved profile.
+	if !strings.Contains(errOut, "404 Not Found") {
+		t.Fatalf("--debug must reveal the raw API error, got: %q", errOut)
+	}
+	if !strings.Contains(errOut, "debug: profile=") {
+		t.Fatalf("--debug must report the resolved profile, got: %q", errOut)
+	}
+}
+
+func TestHostGetNotFoundWithoutDebugHasNoDiag(t *testing.T) {
+	server := fakeXOGet(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = fmt.Fprint(w, `{"message":"not found"}`)
+	})
+	defer server.Close()
+	isolatePointers(t, server.URL)
+
+	errOut, err := runGetExec(t, "get", "aaaaaaaa-bbbb-cccc-dddd-000000000001")
+	if err == nil {
+		t.Fatal("expected an error when the host does not exist")
+	}
+	if strings.Contains(errOut, "debug:") {
+		t.Fatalf("no debug diagnostics expected without --debug, got: %q", errOut)
 	}
 }
 
