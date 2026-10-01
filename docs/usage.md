@@ -297,10 +297,28 @@ xo network list
 xo network list --query '[].name_label'
 xo network get <id>                 # one network (table/json/yaml)
 
+# Create (the creation is asynchronous server-side; the command waits for the
+# backing task and prints the created network)
+xo network create <name> --pool <pool-id> --pif <pif-id>
+xo network create <name> --pool <pool-id> --pif <pif-id> --vlan 100 --mtu 9000
+xo network create-internal <name> --pool <pool-id>
+xo network create-bonded <name> --pool <pool-id> --pifs <pif-1>,<pif-2> --bond-mode active-backup
+
+# Delete (confirm + --yes)
+xo network delete <id>
+xo network delete <id> --yes
+
 # Tags
 xo network tag add <id> production
 xo network tag remove <id> production
 ```
+
+`create` attaches the network to a PIF (physical interface) of one of the
+pool's hosts; `--vlan` selects the VLAN tag (0 for untagged). `create-internal`
+creates a network with no physical attachment, carrying virtual traffic
+between VMs. `create-bonded` links several PIFs into one logical network;
+`--bond-mode` is `active-backup`, `balance-slb` or `lacp`. PIFs are listed
+with `xo rest get pifs` (there is no typed PIF command yet).
 
 ### `xo task`
 
