@@ -227,6 +227,9 @@ v1.19.0 version number is the *module* version, not the REST API version
   asynchronous); e.g. `start`, `clean_shutdown`, `hard_shutdown`,
   `clean_reboot`, `hard_reboot`, `pause`, `unpause`, `suspend`, `resume`,
   `snapshot`.
+- Resource create (synchronous): `POST /<resource>` with a JSON body →
+  `{"id": …}` (the new object's id, no task); used by `vdi create`
+  (`POST /vdis`) and `vbd create` (`POST /vbds`).
 - Delete: `DELETE /<resource>/<id>` → `{"success": true}` (synchronous, no
   task id); e.g. `DELETE /vms/<id>`.
 - Tags: `PUT`/`DELETE /<resource>/<id>/tags/<tag>` (`vms`, `hosts`,
@@ -257,6 +260,9 @@ v1.19.0 version number is the *module* version, not the REST API version
 | ------- | ----------- |
 | `vm list/get/create/start/stop/reboot/pause/unpause/suspend/resume/snapshot/delete/tag` | typed `library.VM` |
 | `vm vdis` | typed `library.VM` (`GetVDIs`) |
+| `vdi list/get/create/delete` | typed `library.VDI` (`GetAll`/`Get`/`Create`/`Delete`, all synchronous) |
+| `vbd list/get/create/delete` | typed `library.VBD` (`GetAll`/`Get`/`Create`/`Delete`, all synchronous) |
+| `vbd connect/disconnect` | typed `library.VBD` (`Connect`/`Disconnect`, return a task id) |
 | `vm export/import` | raw `*client.Client` (XVA/OVA streaming — SDK gap) |
 | `host/pool/sr/network list/get/tag` | typed `library.{Host,Pool,SR,Network}` (`AddTag` / `RemoveTag`) |
 | `network create / create-internal / create-bonded` | typed `library.Network` (`Create*`, which delegate to the `Pool` create actions and wait for the task) |
@@ -279,6 +285,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 - VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete`, `export`/`import` (XVA/OVA), `update`, `tag add/remove`
 - `tag add/remove` on `host`, `pool`, `sr` and `network` (any taggable resource, not just VMs)
 - `network create` / `create-internal` / `create-bonded` / `delete`
+- `vdi list/get/create/delete` and `vbd list/get/create/delete` + `connect`/`disconnect` — VDI and VBD are first-class resources (enables the "add a disk to a VM" use case)
 - `xo rest` raw REST escape hatch on top of the SDK v2 HTTP facilities
 
 The remainder is organized in four layers. The deeper a layer, the more it
@@ -301,11 +308,9 @@ service method (the same pattern as the current commands):
 
 Full resources following the usual `list / get / …` shape:
 
-- `xo vdi` — `Get/GetAll/Create/Delete` + `Migrate` + `Taggable`, plus
-  **streaming `Import`/`Export`** (`raw`, `vhd`) — this also covers the
-  "VM import/export" roadmap item at VDI granularity
-- `xo vbd` — `Get/GetAll/Create` (attach) `/Delete` (detach) +
-  `Connect/Disconnect` hotplug
+- `xo vdi` (remainder of the VDI service): `migrate` (to another SR),
+  `tag add/remove`, and streaming **`Import`/`Export`** (`raw`, `vhd`) — the
+  latter covers the "VM import/export" roadmap item at VDI granularity
 - `xo pbd` — `Get/GetAll` + `Plug/Unplug`
 
 Each resource added here reduces the need for `xo rest`.

@@ -83,9 +83,9 @@ func NewCommand() *cobra.Command {
 		Short: "Call a raw Xen Orchestra REST endpoint",
 		Long: `Call a raw Xen Orchestra REST endpoint.
 
-This is an escape hatch for endpoints that have no typed command yet (VDI/VBD
-management, users and groups, SR actions, ...), not a duplicate of the typed
-commands: if 'xo vm list' covers it, use 'xo vm list'. The request is sent
+This is an escape hatch for endpoints that have no typed command yet (users
+and groups, SR actions, ...), not a duplicate of the typed commands: if
+'xo vm list' covers it, use 'xo vm list'. The request is sent
 through the SDK v2 HTTP client (same authentication, base URL and TLS
 handling), so this is not a second REST client. The OpenAPI spec at
 <endpoint>/rest/v0/docs lists every endpoint and its fields; the REST API
@@ -101,13 +101,11 @@ to read it from stdin.
 'xo rest delete' asks for confirmation; pass --yes to run non-interactively.
 
 Examples:
-  xo rest get vdis                  # list disks (no 'xo vdi' command yet)
+  xo rest get vdis --output json  # raw VDI fields (typed: 'xo vdi list')
   xo rest get vdis --param limit=10
   xo rest get vdis/<id>
-  xo rest post vdis --data '{"name_label":"data"}' --param sr=<id>
   xo rest post srs/<id>/actions/scan       # action without a typed command
-  xo rest delete vdis/<id> --yes
-  xo rest post vdis --data - < vdi.json
+  xo rest get users --output json          # users have no typed command yet
   xo rest get vdis --output json --query '[].name_label'
   xo rest get vdis -i             # also print the status line and headers on stderr`,
 		Args: cobra.ExactArgs(2),

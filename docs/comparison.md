@@ -18,7 +18,7 @@ How each tool feels when driven by hand:
 | Command model        | Dynamic: `xo-cli <method> <param>=<value>` for **every** server method, discovered at runtime (`list-commands`) | Static, resource-oriented: `xo <resource> <operation>`, discovered via `--help`                        |
 | Configuration        | Single registered instance (`xo-cli register` / `unregister`), token stored only, `--url` per-invocation override | Multiple named profiles (`xo configure --profile`), `$XOA_PROFILE` / `XOA_*` env vars, 0600 config file  |
 | Authentication       | username/password, token, OTP (`--otp`), token validity control (`--expiresIn`) | username/password or token (via SDK v2)                                                                 |
-| Object listing       | `list-objects` on all object types, with property filters; a single object needs `rest get vms/<id>` | Typed `list` per resource (`vm`, `host`, `pool`, `sr`, `network`, `task`, `template`) with `--limit` and resource filters (`--power-state`, `--type`, `--status`); single object via `xo <resource> get <id>` |
+| Object listing       | `list-objects` on all object types, with property filters; a single object needs `rest get vms/<id>` | Typed `list` per resource (`vm`, `host`, `pool`, `sr`, `network`, `vdi`, `vbd`, `task`, `template`) with `--limit` and resource filters (`--power-state`, `--type`, `--status`, `--vm`); single object via `xo <resource> get <id>` |
 | Output formats       | Plain text or `--json`                                                          | `table` (default), `json`, `yaml`, `text`                                                               |
 | Filtering / projection | `filter=` / `fields=` parameters (XO filter syntax)                           | AWS-CLI-like `--query` with JMESPath (incl. backtick literals)                                          |
 | Task management      | `rest get tasks/<id> wait[=result]`, `rest post tasks/<id>/actions/abort`       | `task list` / `task get` (list filterable by `--status`); lifecycle actions return the task id          |
@@ -52,7 +52,7 @@ they diverge and that no other section states:
 
 | Gap                                                                                     | `xo-cli` | `xo` Go CLI |
 | --------------------------------------------------------------------------------------- | -------- | ----------- |
-| Call *any* server method (servers, users, groups, backups, VDI, VBD, PBD, …)             | ✅        | ⬜ (added resource by resource on top of the SDK) |
+| Call *any* server method (servers, users, groups, backups, PBD, …)             | ✅        | ⬜ (added resource by resource on top of the SDK) |
 
 Legend: ✅ available — ⬜ not available. A finer-grained, layer-by-layer view of
 what is missing (and what already exists in the SDK) is in the
@@ -61,7 +61,7 @@ what is missing (and what already exists in the SDK) is in the
 ## Summary
 
 - **Where `xo-cli` is broader**: it can call *every* `xo-server` method
-  (hundreds: servers, users, groups, backups, VDI/VBD, network creation, …),
+  (hundreds: servers, users, groups, backups, PBD, network creation, …),
   stream live events, and reach any REST endpoint directly. For one-off or
   exotic operations it remains the most complete tool.
 - **Where this CLI is better**: predictable and typed commands, multiple
@@ -70,6 +70,6 @@ what is missing (and what already exists in the SDK) is in the
   no JSON-RPC/WebSocket dependency — better suited for automation, CI, and
   shell scripting.
 - **What is still missing** (roadmap): `watch`, and more
-  resources (VDI, VBD, servers, users, groups, backups). These are added as
+  resources (servers, users, groups, backups, PBD). These are added as
   they are exposed by the Go SDK v2, per the
   [architecture rules](../AGENTS.md).

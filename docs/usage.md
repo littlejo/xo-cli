@@ -20,6 +20,8 @@ quickstart, see the [README](../README.md).
   - [`xo sr`](#xo-sr)
   - [`xo pool`](#xo-pool)
   - [`xo network`](#xo-network)
+  - [`xo vdi`](#xo-vdi)
+  - [`xo vbd`](#xo-vbd)
   - [`xo task`](#xo-task)
   - [`xo token`](#xo-token)
   - [`xo template`](#xo-template)
@@ -320,6 +322,55 @@ between VMs. `create-bonded` links several PIFs into one logical network;
 `--bond-mode` is `active-backup`, `balance-slb` or `lacp`. PIFs are listed
 with `xo rest get pifs` (there is no typed PIF command yet).
 
+### `xo vdi`
+
+Manage virtual disks (VDIs). A VDI is a disk that lives on a storage
+repository (SR); it is not attached to a VM until you create a VBD for it.
+
+```sh
+xo vdi list
+xo vdi list --type user
+xo vdi list --query '[].name_label'
+xo vdi get <id>                 # one VDI (table/json/yaml)
+
+# Create / delete (delete is confirm + --yes)
+xo vdi create data-01 --sr <sr-id> --size 10G
+xo vdi create data-01 --sr <sr-id> --size 10G --description "data disk" --shared --tags common
+xo vdi delete <id>
+xo vdi delete <id> --yes
+```
+
+`--size` accepts bytes or a human readable size (e.g. `2G`, `512M`). Creating
+a VDI only allocates it on the SR; attach it to a VM with `xo vbd create`
+(see the [use cases](usecases.md#add-a-disk-to-a-vm)).
+
+### `xo vbd`
+
+Manage virtual block devices (VBDs). A VBD is the attachment point between a
+VM and a VDI — it is what "plugs a disk into a VM".
+
+```sh
+xo vbd list
+xo vbd list --vm <vm-id>        # only the VBDs of one VM
+xo vbd list --query '[].VDI'
+xo vbd get <id>                 # one VBD (table/json/yaml)
+
+# Attach / detach
+xo vbd create --vm <vm-id> --vdi <vdi-id>
+xo vbd create --vm <vm-id> --vdi <vdi-id> --mode RO --bootable
+xo vbd delete <id>              # detach (keeps the VDI); confirm + --yes
+xo vbd delete <id> --yes
+
+# Hot-plug / hot-unplug (running VM)
+xo vbd connect <id>
+xo vbd disconnect <id>
+```
+
+`create` links a VDI to a VM; it does not hot-plug. If the VM is running, run
+`connect` afterwards so the guest sees the disk without a reboot. `delete`
+removes only the attachment — the VDI (and its data) is kept; use
+`xo vdi delete` to remove the disk itself.
+
 ### `xo task`
 
 Manage asynchronous tasks.
@@ -375,11 +426,11 @@ xo template get <id>            # one template (table/json/yaml)
 Call a raw Xen Orchestra REST endpoint.
 
 Low-level escape hatch for Xen Orchestra REST endpoints that have no typed
-command yet. Use it for what the typed commands don't cover — VDI/VBD
-management, users and groups, SR actions, … — not to duplicate `xo vm list`
-when `xo vm list` exists. The request goes through the SDK v2 HTTP client
-(same authentication, base URL and TLS handling), so it is not a second REST
-client. Prefer the typed commands when they cover what you need.
+command yet. Use it for what the typed commands don't cover — users and
+groups, SR actions, … — not to duplicate `xo vm list` when `xo vm list`
+exists. The request goes through the SDK v2 HTTP client (same authentication,
+base URL and TLS handling), so it is not a second REST client. Prefer the
+typed commands when they cover what you need.
 
 The path is relative to the REST API root (`/rest/v0`), and the full OpenAPI
 spec at `<endpoint>/rest/v0/docs` lists every endpoint and its fields. See
@@ -387,20 +438,20 @@ also the [official REST API documentation](https://docs.xen-orchestra.com/automa
 
 ```sh
 # Resources with no typed command yet
-xo rest get vdis                               # list disks (no 'xo vdi' yet)
-xo rest get vdis/<id>                          # GET a single disk
 xo rest get users --output json                # list users
 xo rest get groups                             # list groups
 
 # Actions without a typed command
 xo rest post srs/<id>/actions/scan             # rescan an SR
 xo rest post srs/<id>/actions/reclaim_space    # reclaim free space on an SR
-xo rest post vbds/<id>/actions/connect         # attach a disk
-xo rest post vbds/<id>/actions/disconnect      # detach a disk
+
+# Raw access to a typed resource (when the typed command lacks a field/option)
+xo rest get vdis --output json                 # raw VDI fields (typed: 'xo vdi list')
+xo rest get pifs                               # PIFs have no typed command yet
 
 # Request building
 xo rest get vdis --param limit=10              # add query parameters
-xo rest post vdis --data '{"name_label":"data"}' --param sr=<id>   # JSON body
+xo rest post pools/<id>/actions/create_network --data '{...}'   # JSON body
 xo rest post vdis --data - < vdi.json          # read the body from stdin
 xo rest delete vdis/<id> --yes                 # destructive: asks unless --yes
 xo rest get vdis --output json --query '[].name_label'

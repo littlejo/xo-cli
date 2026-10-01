@@ -60,6 +60,7 @@ xo vm list
 | Page | Contents |
 | ---- | -------- |
 | [Usage](docs/usage.md) | Installation, configuration, every command, output & querying |
+| [Use cases](docs/usecases.md) | Task-oriented recipes (add a disk to a VM, …) |
 | [Development](docs/development.md) | Architecture, toolchain, testing, CI & release, versioning, roadmap, license |
 | [Comparison with `xo-cli`](docs/comparison.md) | Side-by-side with the reference XO CLI |
 
