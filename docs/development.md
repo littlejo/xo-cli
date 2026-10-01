@@ -266,6 +266,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 | `vbd connect/disconnect` | typed `library.VBD` (`Connect`/`Disconnect`, return a task id) |
 | `vm export/import` | raw `*client.Client` (XVA/OVA streaming — SDK gap) |
 | `host/pool/sr/network list/get/tag` | typed `library.{Host,Pool,SR,Network}` (`AddTag` / `RemoveTag`) |
+| `pool rolling-update / rolling-reboot / emergency-shutdown` | typed `library.Pool` (`RollingUpdate` / `RollingReboot` / `EmergencyShutdown`, synchronous: they wait for the backing task) |
 | `network create / create-internal / create-bonded` | typed `library.Network` (`Create*`, which delegate to the `Pool` create actions and wait for the task) |
 | `network delete` | typed `library.Network` (`Delete`, synchronous) |
 | `sr scan/reclaim-space` | typed `library.SR` (`Scan` / `ReclaimSpace`) |
@@ -284,6 +285,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 - `vm vdis` (per-VM VDI listing)
 - `sr scan` / `sr reclaim-space` (SR maintenance actions)
 - VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete`, `export`/`import` (XVA/OVA), `update`, `tag add/remove`
+- Pool maintenance: `rolling-update`, `rolling-reboot` and `emergency-shutdown` (confirmation + `--yes` for the two destructive ones; all synchronous)
 - `tag add/remove` on `host`, `pool`, `sr` and `network` (any taggable resource, not just VMs)
 - `network create` / `create-internal` / `create-bonded` / `delete`
 - `vdi list/get/create/delete` and `vbd list/get/create/delete` + `connect`/`disconnect` — VDI and VBD are first-class resources (enables the "add a disk to a VM" use case)
@@ -304,7 +306,6 @@ service method (the same pattern as the current commands):
 | `xo task wait <id>` (+ `--timeout`) | `Task().Wait` / `WaitWithTimeout` (2 s polling, context-aware) |
 | `xo task abort <id>` | `Task().Abort` |
 | `--wait` on async actions (`vm start`, …) | `Task().HandleTaskResponse(ctx, resp, true)` |
-| `xo pool rolling-update / rolling-reboot / emergency-shutdown` | `PoolAction` |
 
 ### Layer 2 — complete SDK services, no CLI resource yet
 

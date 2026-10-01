@@ -14,5 +14,8 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(newGetCommand())
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newTagCommand())
+	cmd.AddCommand(newRollingUpdateCommand())
+	cmd.AddCommand(newRollingRebootCommand())
+	cmd.AddCommand(newEmergencyShutdownCommand())
 	return cmd
 }
