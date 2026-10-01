@@ -94,7 +94,7 @@ func newActionServer(t *testing.T) *actionServer {
 				_, _ = fmt.Fprint(w, `{"message":"boom"}`)
 				return
 			}
-			_, _ = fmt.Fprint(w, fmt.Sprintf(`{"taskId":"%s"}`, testTaskID))
+			_, _ = fmt.Fprintf(w, `{"taskId":"%s"}`, testTaskID)
 		default:
 			http.NotFound(w, r)
 		}
