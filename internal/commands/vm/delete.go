@@ -3,7 +3,6 @@ package vm
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -56,10 +55,7 @@ func runDelete(cmd *cobra.Command, idStr string, yes bool) error {
 	}
 	name, err := nameOf(ctx, xo, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return fmt.Errorf("VM %q not found", idStr)
-		}
-		return cli.InsecureHint(fmt.Sprintf("cannot resolve VM %q: %v", idStr, err), cfg.Insecure)
+		return cli.NotFound("VM", "resolve", idStr, err, cfg.Insecure)
 	}
 
 	ok, err := confirm(cmd, fmt.Sprintf("Are you sure you want to delete VM %q?", name), yes)

@@ -34,6 +34,7 @@ Configure a profile first with 'xo configure'.`,
 	}
 	root.PersistentFlags().StringP(cli.FlagProfile, "p", "", "name of the configuration profile to use (or $XOA_PROFILE)")
 	root.PersistentFlags().StringP(cli.FlagOutput, "o", "table", "output format: table, json, yaml, text")
+	root.PersistentFlags().BoolP(cli.FlagDebug, "d", false, "show SDK/API error details on failure (or $XOA_DEBUG)")
 
 	root.AddCommand(configure.NewCommand())
 	root.AddCommand(newVersionCommand())

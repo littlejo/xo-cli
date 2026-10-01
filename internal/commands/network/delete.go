@@ -112,10 +112,7 @@ func runDelete(cmd *cobra.Command, idStr string, yes bool) error {
 	}
 	name, err := nameOf(ctx, xo, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return fmt.Errorf("network %q not found", idStr)
-		}
-		return cli.InsecureHint(fmt.Sprintf("cannot resolve network %q: %v", idStr, err), cfg.Insecure)
+		return cli.NotFound("network", "resolve", idStr, err, cfg.Insecure)
 	}
 
 	ok, err := confirm(cmd, fmt.Sprintf("Are you sure you want to delete network %q?", name), yes)

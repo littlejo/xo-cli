@@ -3,7 +3,6 @@ package sr
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/docker/go-units"
 	"github.com/gofrs/uuid"
@@ -87,15 +86,10 @@ func newClient(cmd *cobra.Command) (library.Library, *config.ClientConfig, error
 	return xo, cfg, nil
 }
 
-// notFound turns a lookup failure into the concise "SR not found" form when the
-// API returned a 404, and keeps the original error otherwise. It passes the
-// profile's insecure state through so the TLS hint is only suggested when it
-// would actually help.
+// notFound delegates to cli.NotFound, which reports a 404 concisely and keeps
+// the raw API error as debug detail.
 func notFound(id string, err error, insecure bool) error {
-	if err != nil && strings.Contains(err.Error(), "404") {
-		return fmt.Errorf("SR %q not found", id)
-	}
-	return cli.InsecureHint(fmt.Sprintf("cannot get SR %q: %v", id, err), insecure)
+	return cli.NotFound("SR", "get", id, err, insecure)
 }
 
 // renderSR renders a single SR in the requested format. The human format uses

@@ -100,16 +100,17 @@ then to an interactive prompt when stdin is a terminal.
 Environment variables always take precedence over the stored profile at run
 time:
 
-| Variable         | Purpose                                   |
-| ---------------- | ----------------------------------------- |
-| `XOA_PROFILE`     | Select the active profile                 |
-| `XOA_ENDPOINT`    | Xen Orchestra base URL                    |
-| `XOA_TOKEN`       | Authentication token                      |
-| `XOA_USERNAME`    | Username (alternative to a token)         |
-| `XOA_PASSWORD`    | Password (alternative to a token)         |
-| `XOA_INSECURE`    | Skip TLS certificate verification         |
-| `XOA_YES`         | Skip confirmation prompts (like `--yes`)  |
-| `XOA_CONFIG_FILE` | Location of the configuration file        |
+| Variable         | Purpose                                       |
+| ---------------- | --------------------------------------------- |
+| `XOA_PROFILE`     | Select the active profile                     |
+| `XOA_ENDPOINT`    | Xen Orchestra base URL                        |
+| `XOA_TOKEN`       | Authentication token                          |
+| `XOA_USERNAME`    | Username (alternative to a token)             |
+| `XOA_PASSWORD`    | Password (alternative to a token)             |
+| `XOA_INSECURE`    | Skip TLS certificate verification             |
+| `XOA_YES`         | Skip confirmation prompts (like `--yes`)      |
+| `XOA_DEBUG`       | Show SDK/API error details (like `--debug`)   |
+| `XOA_CONFIG_FILE` | Location of the configuration file            |
 
 Either a token, or a username + password, must be available to authenticate.
 
@@ -129,6 +130,29 @@ This disables certificate verification and is only appropriate for internal,
 trusted networks. When a connection fails on certificate verification and
 insecure mode is not enabled, the error points at this escape hatch.
 
+### Debug mode
+
+Errors are intentionally concise: a failed lookup is reported as
+`Error: host "…" not found` rather than the raw API response. The global
+`-d`, `--debug` flag (or the `$XOA_DEBUG` environment variable) reveals the
+details behind that message — which profile and endpoint resolved, and the raw
+SDK/API error. The diagnostics go to **stderr**, so machine-readable stdout
+stays clean even when debugging.
+
+```sh
+xo vm get <id> --debug
+XOA_DEBUG=1 xo vm get <id>
+```
+
+```
+debug: profile=lab endpoint=https://xoa.example.com
+debug: API error: 404 Not Found - {"message": "object not found"}
+Error: VM "550e8400-…" not found
+```
+
+Use it when a failure is hard to explain (a 404 you expected to succeed, a
+weird API body, the wrong endpoint reached) and file the output upstream.
+
 ## Commands
 
 ### Global flags
@@ -137,6 +161,7 @@ insecure mode is not enabled, the error points at this escape hatch.
 | ---------------- | ------------------------------------------------------- |
 | `-p`, `--profile`| Configuration profile to use (or `$XOA_PROFILE`)         |
 | `-o`, `--output` | Output format: `table` (default), `json`, `yaml`, `text`|
+| `-d`, `--debug`  | Show SDK/API error details on failure (or `$XOA_DEBUG`) |
 | `--version`      | Print the CLI version and exit                          |
 
 Commands that return data also accept `--query` / `-q`

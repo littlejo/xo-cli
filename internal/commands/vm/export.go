@@ -5,7 +5,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -74,10 +73,7 @@ Examples:
 			// fails with the usual "not found" error before any download.
 			vm, err := xo.VM().GetByID(cmd.Context(), id)
 			if err != nil {
-				if isNotFound(err) {
-					return fmt.Errorf("VM %q not found", args[0])
-				}
-				return cli.InsecureHint(fmt.Sprintf("cannot resolve VM %q: %v", args[0], err), cfg.Insecure)
+				return cli.NotFound("VM", "resolve", args[0], err, cfg.Insecure)
 			}
 
 			httpClient, err := cli.NewHTTPClient(cmd, cfg)
@@ -181,9 +177,4 @@ func exportDest(file string) string {
 		return "stdout"
 	}
 	return file
-}
-
-// isNotFound reports whether an SDK error is a 404.
-func isNotFound(err error) bool {
-	return err != nil && strings.Contains(err.Error(), "404")
 }

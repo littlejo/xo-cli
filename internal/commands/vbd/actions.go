@@ -3,7 +3,6 @@ package vbd
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/spf13/cobra"
@@ -75,10 +74,7 @@ func runAction(cmd *cobra.Command, idStr string, verb string, perform func(ctx c
 	}
 	vbd, err := xo.VBD().Get(ctx, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return fmt.Errorf("VBD %q not found", idStr)
-		}
-		return cli.InsecureHint(fmt.Sprintf("cannot resolve VBD %q: %v", idStr, err), cfg.Insecure)
+		return cli.NotFound("VBD", "resolve", idStr, err, cfg.Insecure)
 	}
 	label := describe(vbd)
 

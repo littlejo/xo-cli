@@ -73,10 +73,7 @@ Examples:
 				return err
 			}
 			if _, err := xo.Pool().Get(cmd.Context(), pool); err != nil {
-				if isNotFound(err) {
-					return fmt.Errorf("pool %q not found", poolID)
-				}
-				return cli.InsecureHint(fmt.Sprintf("cannot resolve pool %q: %v", poolID, err), cfg.Insecure)
+				return cli.NotFound("pool", "resolve", poolID, err, cfg.Insecure)
 			}
 
 			body, contentLength, err := openImportSource(cmd, args[0])

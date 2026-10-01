@@ -3,7 +3,6 @@ package vbd
 import (
 	"fmt"
 	"io"
-	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/spf13/cobra"
@@ -90,15 +89,10 @@ func newClient(cmd *cobra.Command) (library.Library, *config.ClientConfig, error
 	return xo, cfg, nil
 }
 
-// notFound turns a lookup failure into the concise "VBD not found" form when
-// the API returned a 404, and keeps the original error otherwise. It passes
-// the profile's insecure state through so the TLS hint is only suggested when
-// it would actually help.
+// notFound delegates to cli.NotFound, which reports a 404 concisely and keeps
+// the raw API error as debug detail.
 func notFound(id string, err error, insecure bool) error {
-	if err != nil && strings.Contains(err.Error(), "404") {
-		return fmt.Errorf("VBD %q not found", id)
-	}
-	return cli.InsecureHint(fmt.Sprintf("cannot get VBD %q: %v", id, err), insecure)
+	return cli.NotFound("VBD", "get", id, err, insecure)
 }
 
 // renderVBD renders a single VBD in the requested format. The human format

@@ -3,7 +3,6 @@ package sr
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/spf13/cobra"
@@ -51,10 +50,7 @@ func runTag(cmd *cobra.Command, idStr string, spec tagSpec) error {
 	}
 	name, err := spec.nameOf(ctx, xo, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return fmt.Errorf("SR %q not found", idStr)
-		}
-		return cli.InsecureHint(fmt.Sprintf("cannot resolve SR %q: %v", idStr, err), cfg.Insecure)
+		return cli.NotFound("SR", "resolve", idStr, err, cfg.Insecure)
 	}
 
 	if err := spec.perform(ctx, xo, id, spec.tag); err != nil {

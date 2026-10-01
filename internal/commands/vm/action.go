@@ -94,15 +94,10 @@ func newClient(cmd *cobra.Command) (library.Library, *config.ClientConfig, error
 	return xo, cfg, nil
 }
 
-// notFound turns a lookup failure into the concise "VM not found" form when the
-// API returned a 404, and keeps the original error otherwise. It passes the
-// profile's insecure state through so the TLS hint is only suggested when it
-// would actually help.
+// notFound delegates to cli.NotFound, which reports a 404 concisely and keeps
+// the raw API error as debug detail.
 func notFound(id string, err error, insecure bool) error {
-	if err != nil && strings.Contains(err.Error(), "404") {
-		return fmt.Errorf("VM %q not found", id)
-	}
-	return cli.InsecureHint(fmt.Sprintf("cannot get VM %q: %v", id, err), insecure)
+	return cli.NotFound("VM", "get", id, err, insecure)
 }
 
 // actionSpec describes an async VM action so each command only supplies what
@@ -132,10 +127,7 @@ func runAction(cmd *cobra.Command, spec actionSpec) error {
 	}
 	name, err := nameOf(ctx, xo, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "404") {
-			return fmt.Errorf("VM %q not found", spec.id)
-		}
-		return cli.InsecureHint(fmt.Sprintf("cannot resolve VM %q: %v", spec.id, err), cfg.Insecure)
+		return cli.NotFound("VM", "resolve", spec.id, err, cfg.Insecure)
 	}
 
 	if spec.destructive {
