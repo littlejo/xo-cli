@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/config"
@@ -25,9 +26,20 @@ const (
 	FlagOutput = "output"
 	// FlagDebug is the global --debug flag.
 	FlagDebug = "debug"
+	// FlagTimeout is the global --timeout flag.
+	FlagTimeout = "timeout"
 	// EnvDebug enables verbose SDK/API error diagnostics (like --debug).
 	EnvDebug = "XOA_DEBUG"
+	// EnvTimeout is the script counterpart of --timeout (a Go duration like
+	// "60s" or "2m").
+	EnvTimeout = "XOA_TIMEOUT"
 )
+
+// defaultClientTimeout is the HTTP client timeout when neither --timeout nor
+// $XOA_TIMEOUT is given. It matches the SDK's own default (client.New falls
+// back to 30 s when ClientTimeout is zero); the flag simply makes it explicit
+// and overridable per invocation.
+const defaultClientTimeout = 30 * time.Second
 
 // Version is set at build time with -ldflags "-X ...=x.y.z".
 var Version = "dev"
@@ -128,6 +140,26 @@ func OutputFormat(cmd *cobra.Command) string {
 	return format
 }
 
+// Timeout returns the HTTP client timeout for this invocation. Precedence:
+// the --timeout flag, then the $XOA_TIMEOUT environment variable (a Go
+// duration such as "60s" or "2m"), then the 30-second default. It is applied
+// to the SDK's ClientTimeout (see buildSDKConfig) so every request — and, for
+// long-running operations such as a pool rolling update, the whole task wait —
+// can be raised above the SDK's hard-coded 30-second floor.
+func Timeout(cmd *cobra.Command) time.Duration {
+	if cmd != nil {
+		if d, err := cmd.Root().PersistentFlags().GetDuration(FlagTimeout); err == nil && d > 0 {
+			return d
+		}
+	}
+	if v := os.Getenv(EnvTimeout); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			return d
+		}
+	}
+	return defaultClientTimeout
+}
+
 // SkipConfirm reports whether destructive operations should run without a
 // confirmation prompt: either the --yes flag or the $XOA_YES environment
 // variable. The variable exists so scripts and CI pipelines can confirm
@@ -146,9 +178,9 @@ func SkipConfirm(cmd *cobra.Command) bool {
 // NewClient resolves the selected profile and builds an authenticated SDK v2
 // client. Commands must pass their cobra context to the SDK operations so
 // that cancellation (Ctrl+C) reaches the HTTP layer; the SDK client enforces
-// its own per-request timeout.
+// its own per-request timeout, set from --timeout / $XOA_TIMEOUT (Timeout).
 func NewClient(cmd *cobra.Command, cfg *xoconfig.ClientConfig) (library.Library, error) {
-	sdkConfig, err := buildSDKConfig(cfg)
+	sdkConfig, err := buildSDKConfig(cfg, Timeout(cmd))
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +203,7 @@ func NewClient(cmd *cobra.Command, cfg *xoconfig.ClientConfig) (library.Library,
 // service; use this only for endpoints that are a known gap in the SDK (the
 // missing operation should be contributed upstream).
 func NewHTTPClient(cmd *cobra.Command, cfg *xoconfig.ClientConfig) (*v2client.Client, error) {
-	sdkConfig, err := buildSDKConfig(cfg)
+	sdkConfig, err := buildSDKConfig(cfg, Timeout(cmd))
 	if err != nil {
 		return nil, err
 	}
@@ -218,13 +250,20 @@ func isTLSVerifyError(msg string) bool {
 	return strings.Contains(msg, "certificate") || strings.Contains(msg, "x509")
 }
 
-func buildSDKConfig(cfg *xoconfig.ClientConfig) (*config.Config, error) {
+// buildSDKConfig translates the resolved profile plus the per-invocation
+// HTTP client timeout into the SDK v2 configuration. The timeout is applied
+// to the SDK's ClientTimeout (its HTTP client), which bounds every request
+// and, for long-running operations, the whole task wait. A value of zero
+// keeps the SDK's own 30-second default; the CLI always passes an explicit
+// duration (see Timeout), so the floor is only ever raised, never lowered.
+func buildSDKConfig(cfg *xoconfig.ClientConfig, clientTimeout time.Duration) (*config.Config, error) {
 	sdk := &config.Config{
 		Url:                cfg.Endpoint,
 		Token:              cfg.Token,
 		Username:           cfg.Username,
 		Password:           cfg.Password,
 		InsecureSkipVerify: cfg.Insecure,
+		ClientTimeout:      clientTimeout,
 		// Keep the SDK quiet: the CLI owns stdout/stderr.
 		LogOutputPaths:      []string{"/dev/null"},
 		LogErrorOutputPaths: []string{"/dev/null"},

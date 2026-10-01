@@ -23,6 +23,21 @@ func TestRootOutputShorthand(t *testing.T) {
 	}
 }
 
+// TestRootTimeoutFlag pins that the global --timeout flag is defined on the
+// real root (so it is available to every command) and is a duration. The
+// precedence rules are covered by the cli package tests; this guards the
+// wiring on NewRoot so the flag cannot silently disappear.
+func TestRootTimeoutFlag(t *testing.T) {
+	root := NewRoot()
+	f := root.PersistentFlags().Lookup(cli.FlagTimeout)
+	if f == nil {
+		t.Fatalf("--%s is not defined on the root command", cli.FlagTimeout)
+	}
+	if f.Value.Type() != "duration" {
+		t.Fatalf("--%s type = %q, want %q", cli.FlagTimeout, f.Value.Type(), "duration")
+	}
+}
+
 // TestVersionCommand pins that 'xo version' exists and prints the same line
 // as '--version', offline (no profile or connection needed).
 func TestVersionCommand(t *testing.T) {

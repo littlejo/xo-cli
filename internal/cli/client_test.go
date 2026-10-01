@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -150,6 +151,145 @@ func TestNotFoundOtherErrorKeepsFullMessage(t *testing.T) {
 	}
 	if Detail(err) != "" {
 		t.Fatalf("non-404 errors must not carry a hidden detail: %q", Detail(err))
+	}
+}
+
+// --- timeout ----------------------------------------------------------------
+
+// newTimeoutTestRoot builds a minimal root carrying the global --timeout flag;
+// the noop subcommand records itself so callers can read the parsed flag value
+// on a real cobra command (the value is only populated once cobra parses).
+func newTimeoutTestRoot(captured **cobra.Command) *cobra.Command {
+	root := &cobra.Command{Use: "xo", SilenceUsage: true, SilenceErrors: true}
+	root.PersistentFlags().Duration(FlagTimeout, 0, "")
+	root.AddCommand(&cobra.Command{
+		Use:  "noop",
+		RunE: func(cmd *cobra.Command, _ []string) error { *captured = cmd; return nil },
+	})
+	return root
+}
+
+func TestTimeoutDefault(t *testing.T) {
+	t.Setenv(EnvTimeout, "")
+	var captured *cobra.Command
+	root := newTimeoutTestRoot(&captured)
+	if got := Timeout(root); got != defaultClientTimeout {
+		t.Fatalf("Timeout = %v, want the %v default", got, defaultClientTimeout)
+	}
+	if got := Timeout(nil); got != defaultClientTimeout {
+		t.Fatalf("Timeout(nil) = %v, want the %v default", got, defaultClientTimeout)
+	}
+}
+
+func TestTimeoutFromFlag(t *testing.T) {
+	t.Setenv(EnvTimeout, "")
+	var captured *cobra.Command
+	root := newTimeoutTestRoot(&captured)
+	if err := Execute(context.Background(), root, []string{"noop", "--timeout", "90s"}); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if got := Timeout(root); got != 90*time.Second {
+		t.Fatalf("--timeout 90s = %v, want 90s", got)
+	}
+}
+
+func TestTimeoutFromEnvVar(t *testing.T) {
+	t.Setenv(EnvTimeout, "2m")
+	var captured *cobra.Command
+	root := newTimeoutTestRoot(&captured)
+	if got := Timeout(root); got != 2*time.Minute {
+		t.Fatalf("$%s=2m = %v, want 2m", EnvTimeout, got)
+	}
+}
+
+func TestTimeoutFlagWinsOverEnvVar(t *testing.T) {
+	t.Setenv(EnvTimeout, "2m")
+	var captured *cobra.Command
+	root := newTimeoutTestRoot(&captured)
+	if err := Execute(context.Background(), root, []string{"noop", "--timeout", "90s"}); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	if got := Timeout(root); got != 90*time.Second {
+		t.Fatalf("--timeout must win over $%s, got %v", EnvTimeout, got)
+	}
+}
+
+func TestTimeoutInvalidEnvVarFallsBackToDefault(t *testing.T) {
+	t.Setenv(EnvTimeout, "not-a-duration")
+	var captured *cobra.Command
+	root := newTimeoutTestRoot(&captured)
+	if got := Timeout(root); got != defaultClientTimeout {
+		t.Fatalf("invalid $%s must fall back to the default, got %v", EnvTimeout, got)
+	}
+}
+
+// buildSDKConfig must hand the requested duration to the SDK (its HTTP client
+// timeout), and keep the SDK's 30-second default when given zero.
+func TestBuildSDKConfigPassesTimeout(t *testing.T) {
+	cfg := &xoconfig.ClientConfig{Endpoint: "https://xoa.test", Token: "t"}
+
+	sdk, err := buildSDKConfig(cfg, 2*time.Minute)
+	if err != nil {
+		t.Fatalf("buildSDKConfig: %v", err)
+	}
+	if sdk.ClientTimeout != 2*time.Minute {
+		t.Fatalf("ClientTimeout = %v, want 2m", sdk.ClientTimeout)
+	}
+
+	sdk, err = buildSDKConfig(cfg, 0)
+	if err != nil {
+		t.Fatalf("buildSDKConfig: %v", err)
+	}
+	if sdk.ClientTimeout != 30*time.Second {
+		t.Fatalf("ClientTimeout = %v, want the 30s SDK default", sdk.ClientTimeout)
+	}
+}
+
+// fakeSlowXO answers /rest/v0/vms only after sleeping, so a client timeout
+// shorter than the sleep fails and a longer one succeeds.
+func fakeSlowXO(t *testing.T, sleep time.Duration) *httptest.Server {
+	t.Helper()
+	return httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(sleep)
+		if r.URL.Path != "/rest/v0/vms" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[]`))
+	}))
+}
+
+// TestNewClientAppliesTimeout proves the --timeout value actually reaches the
+// SDK's HTTP client end to end: the same 300-millisecond response succeeds
+// under the 30-second default but is cut short by --timeout 50ms.
+func TestNewClientAppliesTimeout(t *testing.T) {
+	t.Setenv(EnvTimeout, "")
+	server := fakeSlowXO(t, 300*time.Millisecond)
+	defer server.Close()
+	cfg := newInsecureTestConfig(server.URL, true)
+
+	client, err := NewClient(nil, cfg)
+	if err != nil {
+		t.Fatalf("NewClient: %v", err)
+	}
+	if _, err := client.VM().GetAll(context.Background(), 0, ""); err != nil {
+		t.Fatalf("GetAll under the default timeout: %v", err)
+	}
+
+	var captured *cobra.Command
+	root := newTimeoutTestRoot(&captured)
+	if err := Execute(context.Background(), root, []string{"noop", "--timeout", "50ms"}); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+	client, err = NewClient(captured, cfg)
+	if err != nil {
+		t.Fatalf("NewClient with --timeout: %v", err)
+	}
+	if _, err := client.VM().GetAll(context.Background(), 0, ""); err == nil {
+		t.Fatal("expected a timeout error with --timeout 50ms")
+	} else if !strings.Contains(strings.ToLower(err.Error()), "timeout") {
+		t.Fatalf("expected a timeout error, got: %v", err)
 	}
 }
 
