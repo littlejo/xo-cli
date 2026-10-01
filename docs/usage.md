@@ -310,10 +310,24 @@ xo pool list
 xo pool list --query '[?HA_enabled].name_label'
 xo pool get <id>
 
+# Maintenance (all synchronous: the command waits for the backing task)
+xo pool rolling-update <id>                  # apply the pool update, host by host
+xo pool rolling-reboot <id>                  # reboot the hosts one by one (confirm + --yes)
+xo pool emergency-shutdown <id>              # shut down every host at once (confirm + --yes)
+
 # Tags
 xo pool tag add <id> production
 xo pool tag remove <id> production
 ```
+
+`rolling-update` applies the latest pool update, rolling it across the hosts
+one by one (each host is rebooted in turn, with its VMs moved away first);
+the pool stays available the whole time and the command runs without
+confirmation. `rolling-reboot` reboots the hosts in the same rolling fashion
+but is destructive and asks for confirmation. `emergency-shutdown` powers off
+every host at once **without evacuating the VMs first**: the pool is down
+afterwards, so it is a last resort. Like the other destructive commands,
+`--yes` (or `$XOA_YES=1`) skips the confirmation.
 
 ### `xo network`
 
