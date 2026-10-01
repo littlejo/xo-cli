@@ -22,11 +22,17 @@ two resources: the **VDI** (the disk, which lives on a storage repository) and
 the **VBD** (the attachment that plugs the disk into the VM).
 
 ```text
-   1. create the VDI  on an SR        xo vdi create
-   2. attach it to the VM  (VBD)      xo vbd create
-   3. hot-plug it (VM is running)     xo vbd connect
-   4. verify                        xo vm vdis / xo vbd list
+   1. find a target SR                xo sr list
+   2. create the VDI  on an SR        xo vdi create
+   3. attach it to the VM  (VBD)      xo vbd create
+   4. hot-plug it (VM is running)     xo vbd connect
+   5. verify on the host              xo vm vdis / xo vbd list
+   6. prepare it in the guest         lsblk, mkfs, mount, fstab
 ```
+
+Steps 1–5 are done with `xo` (the Xen Orchestra side, i.e. the virtual
+hardware); step 6 is done **inside the guest** — the disk is a plain block
+device there, and the OS must format and mount it like any physical disk.
 
 ### Prerequisites
 
@@ -138,6 +144,66 @@ ID                                    VM                                VDI     
 
 The new VBD shows the assigned `DEVICE` (e.g. `xvdb`) once attached/hot-plugged.
 
+### Step 6 — prepare the disk inside the guest (Linux)
+
+On the Xen Orchestra side the disk is done; inside the guest it is a plain,
+uninitialized block device. Xen Orchestra only manages XenServer / XCP‑ng
+pools, so the hypervisor is always Xen and the disk appears as a
+paravirtualized device, typically `/dev/xvdb` or `/dev/xvdc` depending on
+the devices already present in the guest. The exact name is not guaranteed —
+identify the new one by its size rather than by name:
+
+```sh
+lsblk
+```
+
+```
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINT
+xvda   202:0    0   20G  0 disk
+└─xvda1 202:1   0   20G  0 part /
+xvdb   202:16   0  10G  0 disk            <- the new disk, still empty
+```
+
+Then, from the guest (as root):
+
+```sh
+# Format it (no partition table needed for a data disk). This erases
+# whatever is on the device — make sure it is really the new disk.
+mkfs.ext4 /dev/xvdb
+
+# Mount it now
+mkdir /data
+mount /dev/xvdb /data
+
+# Mount it at boot (nofail so the boot is not blocked if the disk
+# is temporarily missing)
+echo "UUID=$(blkid -s UUID -o value /dev/xvdb) /data ext4 defaults,nofail 0 2" >> /etc/fstab
+```
+
+If the disk should be managed with LVM instead (volumes that can be grown
+later, RAID, …), replace the plain `mkfs` step with:
+
+```sh
+pvcreate /dev/xvdb
+vgcreate datavg /dev/xvdb
+lvcreate -l 100%FREE -n datalv datavg
+mkfs.ext4 /dev/datavg/datalv
+# then mount /dev/datavg/datalv (or by UUID) as above
+```
+
+Notes:
+
+- A **hot-plugged** disk appears in the guest without a reboot (you may need
+  to wait a few seconds or trigger a rescan); a disk attached to a halted VM
+  is simply present at boot.
+- `--shared` VDIs (step 2) allow several VMs to see the same VDI: use a
+  cluster-aware filesystem (GFS2/OCFS2) or LVM cluster if they must write to
+  it concurrently — a plain ext4 mounted read-write on several guests will be
+  corrupted.
+- Guest tools may auto-detect new disks (e.g. `lvm2`'s automatic PV
+  scanning, cloud-init): if the guest already formatted the disk before you
+  did, `mkfs` above would destroy it — check with `lsblk` / `blkid` first.
+
 ### Scripting it end to end
 
 Machine-readable output keeps only the requested data on stdout, so the steps
@@ -187,6 +253,8 @@ still attached to any VM cannot be deleted.
 | Disk created but the guest doesn't see it | The VM is running and you skipped the hot-plug. Run `xo vbd connect <vbd-id>`. |
 | `cannot delete VDI` | The VDI is still attached. Run `xo vbd list --vm <id>` and `xo vbd delete` each VBD first. |
 | Hot-plug refused | The guest OS or the disk type doesn't support hot-plug; reboot the VM instead. |
+| Disk visible on the host (`xo vbd list`) but not in the guest | Check `lsblk` inside the guest: the hot-plug may need a few seconds (or a rescan), or the guest kernel hasn't picked it up — see step 6. |
+| `mkfs` / mount fails on the guest | The VBD is not attached (`ATTACHED: no`), the disk is still in use, or you targeted the wrong device — re-check `lsblk` and `xo vbd list --vm <id>`. |
 
 Every failure is reported as `Error: …` on **stderr**; machine-readable output
 on stdout stays clean, so scripts can branch on the exit code and the stderr
