@@ -439,10 +439,24 @@ xo task list                        # all asynchronous tasks
 xo task list --status failure       # filter by status (pending, success, failure, interrupted)
 xo task list --query '[].id'
 xo task get <id>                    # one task (table/json/yaml)
+xo task wait <id>                   # block until the task completes
+xo task wait <id> --timeout 5m      # …but give up after 5 minutes
 ```
 
 Asynchronous operations (`vm start`, `vm create`, …) return a task id; follow
-it with `xo task get <id>`.
+it with `xo task get <id>` or `xo task wait <id>`.
+
+`task wait` polls the task every 2 seconds until it reaches a terminal state
+(`success`, `failure` or `interrupted`) and prints it like `task get`. It is
+meant to be scripted: the exit status reflects the outcome — `0` on success,
+non-zero if the task fails, is interrupted, the `--timeout` deadline is hit,
+or the task does not exist — while the completed task is still written to
+stdout in the chosen format.
+
+Note that `task wait`'s `--timeout` is the **wait** deadline and is a
+command-local flag: it shadows the global HTTP `--timeout` on this command. To
+also raise the per-request HTTP timeout (applied to each poll) set
+`$XOA_TIMEOUT`.
 
 ### `xo token`
 
