@@ -259,6 +259,8 @@ v1.19.0 version number is the *module* version, not the REST API version
 | `vm vdis` | typed `library.VM` (`GetVDIs`) |
 | `vm export/import` | raw `*client.Client` (XVA/OVA streaming — SDK gap) |
 | `host/pool/sr/network list/get/tag` | typed `library.{Host,Pool,SR,Network}` (`AddTag` / `RemoveTag`) |
+| `network create / create-internal / create-bonded` | typed `library.Network` (`Create*`, which delegate to the `Pool` create actions and wait for the task) |
+| `network delete` | typed `library.Network` (`Delete`, synchronous) |
 | `sr scan/reclaim-space` | typed `library.SR` (`Scan` / `ReclaimSpace`) |
 | `vm update` | raw `*client.Client` (PATCH — SDK gap) |
 | `template list/get`, `task list/get` | raw `client.TypedGet` |
@@ -276,6 +278,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 - `sr scan` / `sr reclaim-space` (SR maintenance actions)
 - VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete`, `export`/`import` (XVA/OVA), `update`, `tag add/remove`
 - `tag add/remove` on `host`, `pool`, `sr` and `network` (any taggable resource, not just VMs)
+- `network create` / `create-internal` / `create-bonded` / `delete`
 - `xo rest` raw REST escape hatch on top of the SDK v2 HTTP facilities
 
 The remainder is organized in four layers. The deeper a layer, the more it
@@ -292,7 +295,6 @@ service method (the same pattern as the current commands):
 | `xo task wait <id>` (+ `--timeout`) | `Task().Wait` / `WaitWithTimeout` (2 s polling, context-aware) |
 | `xo task abort <id>` | `Task().Abort` |
 | `--wait` on async actions (`vm start`, …) | `Task().HandleTaskResponse(ctx, resp, true)` |
-| `xo network create / create-internal / create-bonded / delete` | `Network().Create* / Delete` (aliases of the `Pool` actions) |
 | `xo pool rolling-update / rolling-reboot / emergency-shutdown` | `PoolAction` |
 
 ### Layer 2 — complete SDK services, no CLI resource yet
