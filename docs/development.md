@@ -292,7 +292,6 @@ service method (the same pattern as the current commands):
 | `xo task wait <id>` (+ `--timeout`) | `Task().Wait` / `WaitWithTimeout` (2 s polling, context-aware) |
 | `xo task abort <id>` | `Task().Abort` |
 | `--wait` on async actions (`vm start`, …) | `Task().HandleTaskResponse(ctx, resp, true)` |
-| `xo host / pool / sr / network tag add\|remove` | `Taggable`, implemented by all four services (tag endpoints `PUT`/`DELETE /<resource>/<id>/tags/<tag>`) |
 | `xo network create / create-internal / create-bonded / delete` | `Network().Create* / Delete` (aliases of the `Pool` actions) |
 | `xo pool rolling-update / rolling-reboot / emergency-shutdown` | `PoolAction` |
 
