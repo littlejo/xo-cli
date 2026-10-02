@@ -12,6 +12,8 @@
 #   - a "feat" commit (or a merge from a *feat* branch) since the last tag
 #     bumps the MINOR version and resets PATCH (0.1.0 -> 0.2.0)
 #   - any other change bumps PATCH (0.1.0 -> 0.1.1)
+#   - a change that only touches documentation (docs/, README.md, AGENTS.md)
+#     does NOT ship a new tag: documentation is not part of the release
 #   - with no tag at all, the first feature starts the project at 0.1.0
 #
 # Human-readable detail is printed on the other lines.
@@ -42,6 +44,27 @@ if [ -n "$LAST_TAG" ]; then
 else
   BASE="0.0.0"
   RANGE="HEAD"
+fi
+
+# --- documentation-only change: no new tag ----------------------------------
+# A release ships a binary plus go.mod; nothing in docs/ or the top-level
+# markdown is part of it. When the whole range only touches documentation
+# files, skip the tag so doc fixes do not churn the version.
+DOC_FILES="^(docs/|README\.md|AGENTS\.md)"
+if [ -n "$LAST_TAG" ]; then
+  CHANGED="$(git diff --name-only "$LAST_TAG" HEAD)"
+else
+  CHANGED="$(git ls-tree -r --name-only HEAD)"
+fi
+if [ -z "$CHANGED" ]; then
+  echo "range $RANGE has no file changes"
+  echo "SKIP"
+  exit 0
+fi
+if ! printf '%s\n' "$CHANGED" | grep -qvE "$DOC_FILES"; then
+  echo "range $RANGE only touches documentation"
+  echo "SKIP"
+  exit 0
 fi
 
 MAJOR="${BASE%%.*}"
