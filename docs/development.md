@@ -270,8 +270,13 @@ v1.19.0 version number is the *module* version, not the REST API version
 | `vm list/get/create/start/stop/reboot/pause/unpause/suspend/resume/snapshot/delete/tag` | typed `library.VM` |
 | `vm vdis` | typed `library.VM` (`GetVDIs`) |
 | `vdi list/get/create/delete` | typed `library.VDI` (`GetAll`/`Get`/`Create`/`Delete`, all synchronous) |
+| `vdi migrate` | typed `library.VDI` (`Migrate`, returns a task id — the VDI gets a new id) |
+| `vdi tag add/remove` | typed `library.VDI` (`AddTag` / `RemoveTag`, `Taggable`) |
+| `vdi export/import` | typed `library.VDI` (`Export` / `Import`, raw/vhd streaming) |
 | `vbd list/get/create/delete` | typed `library.VBD` (`GetAll`/`Get`/`Create`/`Delete`, all synchronous) |
 | `vbd connect/disconnect` | typed `library.VBD` (`Connect`/`Disconnect`, return a task id) |
+| `pbd list/get` | typed `library.PBD` (`GetAll`/`Get`, synchronous) |
+| `pbd plug/unplug` | typed `library.PBD` (`Plug`/`Unplug`, return a task id) |
 | `vm export/import` | raw `*client.Client` (XVA/OVA streaming — SDK gap) |
 | `host/pool/sr/network list/get/tag` | typed `library.{Host,Pool,SR,Network}` (`AddTag` / `RemoveTag`) |
 | `pool rolling-update / rolling-reboot / emergency-shutdown` | typed `library.Pool` (`RollingUpdate` / `RollingReboot` / `EmergencyShutdown`, synchronous: they wait for the backing task) |
@@ -299,6 +304,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 - `tag add/remove` on `host`, `pool`, `sr` and `network` (any taggable resource, not just VMs)
 - `network create` / `create-internal` / `create-bonded` / `delete`
 - `vdi list/get/create/delete` + `migrate`/`tag add-remove`/`export`/`import` and `vbd list/get/create/delete` + `connect`/`disconnect` — VDI and VBD are first-class resources (enables the "add a disk to a VM" use case)
+- `pbd list/get` + `plug`/`unplug` — PBD is a first-class resource (`Plug`/`Unplug` are asynchronous and return a task id)
 - `xo rest` raw REST escape hatch on top of the SDK v2 HTTP facilities
 - `-d`, `--debug` global flag (+ `$XOA_DEBUG`): reveals the raw SDK/API error and the resolved profile/endpoint behind a concise failure
 - `--timeout` global flag (+ `$XOA_TIMEOUT`): overrides the SDK's 30-second HTTP client timeout for long-running operations
@@ -326,9 +332,8 @@ Each item added here reduces the need for `xo rest`.
 Full resources following the usual `list / get / …` shape, built on an
 implemented SDK service (verified in `v1.19.0`):
 
-- `xo pbd` — `PBD().GetAll / Get / Plug / Unplug` (the only SDK service with
-  no matching CLI resource; `Plug`/`Unplug` are asynchronous and return a
-  task id)
+- — (empty: every SDK v1.19.0 service now has a matching CLI resource;
+  `xo pbd` was the last one to be covered)
 
 ### Layer 3 — in the REST API, not in the SDK yet
 

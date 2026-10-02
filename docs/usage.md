@@ -22,6 +22,7 @@ quickstart, see the [README](../README.md).
   - [`xo network`](#xo-network)
   - [`xo vdi`](#xo-vdi)
   - [`xo vbd`](#xo-vbd)
+  - [`xo pbd`](#xo-pbd)
   - [`xo task`](#xo-task)
   - [`xo token`](#xo-token)
   - [`xo template`](#xo-template)
@@ -453,6 +454,25 @@ xo vbd disconnect <id>
 `connect` afterwards so the guest sees the disk without a reboot. `delete`
 removes only the attachment — the VDI (and its data) is kept; use
 `xo vdi delete` to remove the disk itself.
+
+### `xo pbd`
+
+Manage physical block devices (PBDs). A PBD is the connection between a host
+and a storage repository (SR) — it is what "plugs" an SR into a host.
+
+```sh
+xo pbd list
+xo pbd list --query '[].attached'
+xo pbd get <id>                 # one PBD (table/json/yaml)
+
+# Connect / disconnect the SR to its host (async: prints a task id)
+xo pbd plug <id>
+xo pbd unplug <id>
+```
+
+`plug` / `unplug` are asynchronous: they print the task id and return. Track
+them with `xo task get <task-id>` or `xo task wait <task-id>`. A PBD's
+`attached` column reflects whether the SR is currently connected.
 
 ### `xo task`
 
