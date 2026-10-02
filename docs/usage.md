@@ -506,10 +506,19 @@ xo task list --query '[].id'
 xo task get <id>                    # one task (table/json/yaml)
 xo task wait <id>                   # block until the task completes
 xo task wait <id> --timeout 5m      # …but give up after 5 minutes
+xo task abort <id>                  # ask Xen Orchestra to interrupt a running task
+xo task abort <id> --yes            # …without the confirmation prompt
 ```
 
 Asynchronous operations (`vm start`, `vm create`, …) return a task id; follow
 it with `xo task get <id>` or `xo task wait <id>`.
+
+`task abort` requests the interruption of a task that is still **pending**;
+the task then reaches the `interrupted` status. It is a destructive operation
+(aborting a VM start mid-way, for example, does not always fully unwind the
+operation) and asks for confirmation unless `--yes` (or `$XOA_YES=1`) is
+given. Aborting a task that already reached a terminal state (`success`,
+`failure` or `interrupted`) is rejected with a clear error.
 
 `task wait` polls the task every 2 seconds until it reaches a terminal state
 (`success`, `failure` or `interrupted`) and prints it like `task get`. It is

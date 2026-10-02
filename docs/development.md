@@ -284,6 +284,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 | `network delete` | typed `library.Network` (`Delete`, synchronous) |
 | `sr scan/reclaim-space` | typed `library.SR` (`Scan` / `ReclaimSpace`) |
 | `task wait` | raw `client.TypedGet` poll loop (the SDK's `Task().Wait` is not used — see "Known SDK gaps") |
+| `task abort` | typed `library.Task` (`Abort`) + raw `client.TypedGet` pre-check (existence and status, same reason as `task wait`) |
 | `vm update` | raw `*client.Client` (PATCH — SDK gap) |
 | `template list/get`, `task list/get` | raw `client.TypedGet` |
 | `token list/get/create` | raw `*client.Client` (GET/POST, 307 redirect) |
@@ -297,6 +298,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 - `xo configure` + named profiles (with environment overrides)
 - `list` / `get` for `vm`, `host`, `pool`, `sr`, `network`, `task`, `template`, `token`
 - `task wait` (blocks until a task reaches a terminal state; exit status reflects the outcome)
+- `task abort` (asks Xen Orchestra to interrupt a pending task; confirmation + `--yes`; pre-checks existence and that the task is still pending, so a finished task is rejected with a clear error)
 - `--wait` on the asynchronous actions (`vm start/stop/reboot/pause/unpause/suspend/resume/snapshot`, `vbd connect/disconnect`, `pbd plug/unplug`, `sr scan/reclaim-space`; plus `$XOA_WAIT` for scripts): blocks until the action's task completes, then renders it (shared `internal/taskwait` package, reused by `task wait`)
 - `vm vdis` (per-VM VDI listing)
 - `sr scan` / `sr reclaim-space` (SR maintenance actions)
@@ -321,9 +323,8 @@ Every item below is a command (or a small set of commands) on top of an
 existing, implemented SDK service method — the same pattern as the current
 commands. No SDK work is required.
 
-| Command | SDK surface (verified in `v1.19.0`) |
-| ------- | ----------------------------------- |
-| `xo task abort <id>` | `Task().Abort` |
+- — (empty: every SDK v1.19.0 service method that maps to a single CLI command
+  is now exposed; `xo task abort` was the last one to be covered)
 
 Each item added here reduces the need for `xo rest`.
 
