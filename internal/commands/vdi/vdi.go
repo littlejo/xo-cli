@@ -15,5 +15,9 @@ func NewCommand() *cobra.Command {
 	cmd.AddCommand(newListCommand())
 	cmd.AddCommand(newCreateCommand())
 	cmd.AddCommand(newDeleteCommand())
+	cmd.AddCommand(newMigrateCommand())
+	cmd.AddCommand(newTagCommand())
+	cmd.AddCommand(newExportCommand())
+	cmd.AddCommand(newImportCommand())
 	return cmd
 }

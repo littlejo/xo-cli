@@ -397,11 +397,35 @@ xo vdi create data-01 --sr <sr-id> --size 10G
 xo vdi create data-01 --sr <sr-id> --size 10G --description "data disk" --shared --tags common
 xo vdi delete <id>
 xo vdi delete <id> --yes
+
+# Migrate to another SR (async: prints a task id; the VDI gets a NEW id)
+xo vdi migrate <id> --sr <sr-id>
+xo vdi migrate <id> --sr <sr-id> --output json
+
+# Tags
+xo vdi tag add <id> production
+xo vdi tag remove <id> production
+
+# Export / import (raw or vhd; export streams to stdout unless --file is given)
+xo vdi export <id> > disk.raw
+xo vdi export <id> --file disk.raw
+xo vdi export <id> --format vhd --file disk.vhd
+xo vdi import <id> disk.raw          # confirm + --yes (overwrites the VDI)
+cat disk.raw | xo vdi import <id> -
 ```
 
 `--size` accepts bytes or a human readable size (e.g. `2G`, `512M`). Creating
 a VDI only allocates it on the SR; attach it to a VM with `xo vbd create`
 (see the [use cases](usecases.md#add-a-disk-to-a-vm)).
+
+`xo vdi migrate` is asynchronous: it prints the task id and returns. Track it
+with `xo task get <task-id>` or `xo task wait <task-id>`. When the migration
+completes the VDI has a **new id**, so re-look it up by name (`xo vdi list`)
+or through its VM (`xo vm vdis <vm-id>`).
+
+`xo vdi import` overwrites the content of an existing VDI, so it asks for
+confirmation unless `--yes` (or `$XOA_YES=1`) is given. The target VDI already
+exists (create it first with `xo vdi create` if needed).
 
 ### `xo vbd`
 

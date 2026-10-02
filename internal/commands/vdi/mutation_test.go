@@ -18,6 +18,8 @@ import (
 const (
 	getVDIID     = "11111111-1111-4111-8111-111111111111"
 	createdVDIID = "44444444-4444-4444-8444-444444444444"
+	targetSRID   = "aaaaaaaa-bbbb-cccc-dddd-000000000002"
+	migrateTask  = "99999999-1111-4111-8111-999999999999"
 )
 
 const fixtureVDI = `{
@@ -37,6 +39,19 @@ const fixtureVDI = `{
 	"$VBDs": ["33333333-3333-4333-8333-333333333333"],
 	"$poolId": "aaaaaaaa-bbbb-cccc-dddd-000000000009"
 }`
+
+// fixtureTask is the task created by a VDI migration (pending, so the command
+// reports it without waiting).
+const fixtureTask = `{
+	"id": "` + migrateTask + `",
+	"status": "pending",
+	"start": "2026-09-28T10:05:00.000Z",
+	"properties": {"name": "migrate", "type": "VDI"}
+}`
+
+// fixtureImage is the content the export endpoint streams and the import
+// endpoint records.
+const fixtureImage = "RAWDISKIMAGE"
 
 type request struct {
 	Method string
@@ -70,6 +85,12 @@ func newMutationServer(t *testing.T) *mutationServer {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		switch {
+		// Export: streams the fixture image for the raw and vhd formats.
+		// (Matched before the generic /vdis/{id} GET case, which would 404.)
+		case r.Method == http.MethodGet && (r.URL.Path == "/rest/v0/vdis/"+getVDIID+".raw" ||
+			r.URL.Path == "/rest/v0/vdis/"+getVDIID+".vhd"):
+			w.Header().Set("Content-Type", "application/octet-stream")
+			_, _ = fmt.Fprint(w, fixtureImage)
 		case r.Method == http.MethodGet && r.URL.Path == "/rest/v0/vdis/"+getVDIID:
 			_, _ = fmt.Fprint(w, fixtureVDI)
 		case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/rest/v0/vdis/"):
@@ -78,6 +99,24 @@ func newMutationServer(t *testing.T) *mutationServer {
 		case r.Method == http.MethodPost && r.URL.Path == "/rest/v0/vdis":
 			_, _ = fmt.Fprint(w, `{"id": "44444444-4444-4444-8444-444444444444"}`)
 		case r.Method == http.MethodDelete && r.URL.Path == "/rest/v0/vdis/"+getVDIID:
+			_, _ = fmt.Fprint(w, `{}`)
+		// Existence check for the migrate destination SR.
+		case r.Method == http.MethodGet && r.URL.Path == "/rest/v0/srs/"+targetSRID:
+			_, _ = fmt.Fprint(w, `{"id": "`+targetSRID+`", "name_label": "fast sr"}`)
+		// Migrate action: returns the task id.
+		case r.Method == http.MethodPost && r.URL.Path == "/rest/v0/vdis/"+getVDIID+"/actions/migrate":
+			_, _ = fmt.Fprint(w, `{"taskId": "`+migrateTask+`"}`)
+		// The task created by the migrate action (fetched right after).
+		case r.Method == http.MethodGet && r.URL.Path == "/rest/v0/tasks/"+migrateTask:
+			_, _ = fmt.Fprint(w, fixtureTask)
+		// Tag management.
+		case r.Method == http.MethodPut && strings.HasPrefix(r.URL.Path, "/rest/v0/vdis/"+getVDIID+"/tags/"):
+			_, _ = fmt.Fprint(w, `{}`)
+		case r.Method == http.MethodDelete && strings.HasPrefix(r.URL.Path, "/rest/v0/vdis/"+getVDIID+"/tags/"):
+			_, _ = fmt.Fprint(w, `{}`)
+		// Import: accepts the streamed image.
+		case r.Method == http.MethodPut && (r.URL.Path == "/rest/v0/vdis/"+getVDIID+".raw" ||
+			r.URL.Path == "/rest/v0/vdis/"+getVDIID+".vhd"):
 			_, _ = fmt.Fprint(w, `{}`)
 		default:
 			http.NotFound(w, r)

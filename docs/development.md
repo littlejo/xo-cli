@@ -298,7 +298,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 - Pool maintenance: `rolling-update`, `rolling-reboot` and `emergency-shutdown` (confirmation + `--yes` for the two destructive ones; all synchronous)
 - `tag add/remove` on `host`, `pool`, `sr` and `network` (any taggable resource, not just VMs)
 - `network create` / `create-internal` / `create-bonded` / `delete`
-- `vdi list/get/create/delete` and `vbd list/get/create/delete` + `connect`/`disconnect` — VDI and VBD are first-class resources (enables the "add a disk to a VM" use case)
+- `vdi list/get/create/delete` + `migrate`/`tag add-remove`/`export`/`import` and `vbd list/get/create/delete` + `connect`/`disconnect` — VDI and VBD are first-class resources (enables the "add a disk to a VM" use case)
 - `xo rest` raw REST escape hatch on top of the SDK v2 HTTP facilities
 - `-d`, `--debug` global flag (+ `$XOA_DEBUG`): reveals the raw SDK/API error and the resolved profile/endpoint behind a concise failure
 - `--timeout` global flag (+ `$XOA_TIMEOUT`): overrides the SDK's 30-second HTTP client timeout for long-running operations
@@ -318,12 +318,8 @@ commands. No SDK work is required.
 | ------- | ----------------------------------- |
 | `xo task abort <id>` | `Task().Abort` |
 | `--wait` on async actions (`vm start`, …) | `Task().HandleTaskResponse(ctx, resp, true)` |
-| `xo vdi migrate <id> --sr <sr-id>` | `VDI().Migrate` (async; the VDI gets a new ID) |
-| `xo vdi tag add/remove <id> <tag>` | `VDI().AddTag / RemoveTag` (`Taggable`) |
-| `xo vdi export / import` (streaming `raw`/`vhd`) | `VDI().Export / Import` — covers "VM import/export" at VDI granularity |
 
-The `xo vdi` rows extend the existing `vdi list/get/create/delete`. Each item
-added here reduces the need for `xo rest`.
+Each item added here reduces the need for `xo rest`.
 
 ### Layer 2 — complete SDK services, no CLI resource yet
 
