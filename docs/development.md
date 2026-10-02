@@ -253,6 +253,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 | `VM().Update` returns `not yet implemented` | `xo vm update` sends the PATCH itself via the exported `*client.Client` (documented in `vm/update.go`; to contribute upstream) |
 | No typed VM XVA/OVA import/export | `xo vm export` / `xo vm import` stream through the exported `*client.Client` against `GET /vms/<id>.<format>` and `POST /pools/<pool>/vms` (documented in `vm/xva.go`; to contribute upstream) |
 | No typed service for `vm-templates`, tasks or user tokens | `TypedGet` directly (`xo template`, `xo task`, `xo token`) |
+| `Task().Wait` / `WaitWithTimeout` unmarshal into `payloads.Task`, whose `Result` is a struct — but XO sometimes returns a task `result` as a **plain string** (see `TestTaskGetStringResult`), so `Get` (and therefore `Wait`) fails to unmarshal such tasks and loops to the deadline; `Wait` also does not treat `interrupted` as terminal | `xo task wait` polls with `client.TypedGet` (the same single SDK boundary as `task get`) and stops on `success`/`failure`/`interrupted` (documented in `task/wait.go`; the SDK result type should be contributed upstream) |
 | `users/me` 307-redirects to the user id | handled by `net/http` following the redirect; `doTokensRequest` relies on 307 body replay for POST |
 | `v2` package `init()` runs `gotenv.Load()` (reads a `.env` in the CWD) | harmless: we build the config with `NewWithValues`, which reads no env vars |
 | Server XO version is not exposed by the REST API (v0) — `GET /ping` only returns `{result, timestamp}` and the `xoa` REST controller has no version route | `xo version` prints the **CLI** version offline (like `aws version`); the server version exists only as the legacy JSON-RPC `getServerVersion` method, which the CLI never calls (v1 is forbidden by AGENTS.md) |
@@ -272,6 +273,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 | `network create / create-internal / create-bonded` | typed `library.Network` (`Create*`, which delegate to the `Pool` create actions and wait for the task) |
 | `network delete` | typed `library.Network` (`Delete`, synchronous) |
 | `sr scan/reclaim-space` | typed `library.SR` (`Scan` / `ReclaimSpace`) |
+| `task wait` | raw `client.TypedGet` poll loop (the SDK's `Task().Wait` is not used — see "Known SDK gaps") |
 | `vm update` | raw `*client.Client` (PATCH — SDK gap) |
 | `template list/get`, `task list/get` | raw `client.TypedGet` |
 | `token list/get/create` | raw `*client.Client` (GET/POST, 307 redirect) |
@@ -284,6 +286,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 
 - `xo configure` + named profiles (with environment overrides)
 - `list` / `get` for `vm`, `host`, `pool`, `sr`, `network`, `task`, `template`, `token`
+- `task wait` (blocks until a task reaches a terminal state; exit status reflects the outcome)
 - `vm vdis` (per-VM VDI listing)
 - `sr scan` / `sr reclaim-space` (SR maintenance actions)
 - VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete`, `export`/`import` (XVA/OVA), `update`, `tag add/remove`
@@ -306,7 +309,6 @@ service method (the same pattern as the current commands):
 
 | Command | SDK surface (verified in `v1.19.0`) |
 | ------- | ----------------------------------- |
-| `xo task wait <id>` (+ `--timeout`) | `Task().Wait` / `WaitWithTimeout` (2 s polling, context-aware) |
 | `xo task abort <id>` | `Task().Abort` |
 | `--wait` on async actions (`vm start`, …) | `Task().HandleTaskResponse(ctx, resp, true)` |
 
