@@ -127,8 +127,8 @@ XOA_TEST_URL=http://localhost:3001 XOA_TEST_TOKEN=test-token go test -tags=integ
   over real HTTP without a live instance.
 - **Version** (`.github/workflows/version.yml`): on every push to `main`,
   computes the next semver tag from the conventional-commits history
-  (`feat` → minor, anything else → patch), pushes it, and triggers the Release
-  workflow.
+  (`feat` → minor, anything else → patch, **documentation-only changes → no
+  new tag**), pushes it, and triggers the Release workflow.
 - **Release** (`.github/workflows/release.yml`): for a `v*.*.*` tag, runs the
   test suite, then builds cross-platform binaries with
   [GoReleaser](https://goreleaser.com) and publishes them as a draft GitHub
@@ -146,9 +146,14 @@ git tag v1.0.0 && git push origin v1.0.0
 
 Releases follow [semantic versioning](https://semver.org/) and
 [Conventional Commits](https://www.conventionalcommits.org/): a `feat` commit
-bumps the minor version, anything else bumps the patch version. Tags are
+bumps the minor version, any other change bumps the patch version. Tags are
 created automatically on push to `main` (see
 [CI / Release](#ci--release)).
+
+A change that only touches documentation (`docs/`, `README.md`, `AGENTS.md`)
+does not produce a new tag: a release ships the binary and `go.mod`, nothing
+in the documentation, so doc fixes are not released on their own. The rule is
+implemented in `.github/scripts/bump-version.sh`.
 
 ## Repository layout
 
