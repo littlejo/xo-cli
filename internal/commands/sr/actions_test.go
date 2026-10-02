@@ -192,3 +192,25 @@ func TestSRReclaimSpaceAPIError(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+// --- --wait ------------------------------------------------------------------
+
+func TestSRScanWait(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolatePointers(t, server.URL)
+
+	out, err := runSRAction(t, "sr", "scan", "11111111-1111-4111-8111-111111111111", "--wait")
+	if err != nil {
+		t.Fatalf("sr scan --wait: %v", err)
+	}
+	// The completed task is rendered instead of the "Requested scan" line.
+	for _, expected := range []string{"ID", "STATUS", "task-123", "success"} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("wait output missing %q:\n%s", expected, out)
+		}
+	}
+	if strings.Contains(out, "Requested scan") {
+		t.Fatalf("the plain action line must be replaced by the task when --wait is set:\n%s", out)
+	}
+}

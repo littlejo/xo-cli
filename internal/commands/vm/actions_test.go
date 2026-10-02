@@ -102,7 +102,7 @@ func readBody(r *http.Request) (string, error) {
 func isolateVM(t *testing.T, url string) {
 	t.Helper()
 	t.Setenv("XOA_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE", "XOA_YES"} {
+	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE", "XOA_YES", "XOA_WAIT"} {
 		t.Setenv(key, "")
 	}
 	t.Setenv("XOA_ENDPOINT", url)
@@ -444,6 +444,42 @@ func TestVMSnapshot(t *testing.T) {
 	}
 }
 
+// $XOA_WAIT is the script counterpart of --wait: it makes the action wait for
+// its task without passing the flag on every command.
+func TestVMStartWaitsWithEnvWait(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+	t.Setenv("XOA_WAIT", "1")
+
+	out, err := runVM(t, "vm", "start", "550e8400-e29b-41d4-a716-446655440001")
+	if err != nil {
+		t.Fatalf("vm start with XOA_WAIT=1: %v", err)
+	}
+	if !strings.Contains(out, "STATUS") || !strings.Contains(out, "task-123") {
+		t.Fatalf("XOA_WAIT=1 should wait and render the task:\n%s", out)
+	}
+	if strings.Contains(out, "Requested start") {
+		t.Fatalf("the plain action line must be replaced by the task:\n%s", out)
+	}
+}
+
+// A value that is not "true-ish" must not enable the wait.
+func TestVMStartEnvWaitInvalidValue(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+	t.Setenv("XOA_WAIT", "nope")
+
+	out, err := runVM(t, "vm", "start", "550e8400-e29b-41d4-a716-446655440001")
+	if err != nil {
+		t.Fatalf("vm start: %v", err)
+	}
+	if !strings.Contains(out, "Requested start") {
+		t.Fatalf("a non-true XOA_WAIT must not wait:\n%s", out)
+	}
+}
+
 // --- shared error handling --------------------------------------------------
 
 func TestVMActionAPIError(t *testing.T) {
@@ -465,5 +501,76 @@ func TestVMActionAPIError(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "cannot start") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// --- --wait -----------------------------------------------------------------
+
+func TestVMStartWait(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	out, err := runVM(t, "vm", "start", "550e8400-e29b-41d4-a716-446655440001", "--wait")
+	if err != nil {
+		t.Fatalf("vm start --wait: %v", err)
+	}
+	// The completed task is rendered instead of the "Requested start" line.
+	for _, expected := range []string{"ID", "STATUS", "task-123", "success"} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("wait output missing %q:\n%s", expected, out)
+		}
+	}
+	if strings.Contains(out, "Requested start") {
+		t.Fatalf("the plain action line must be replaced by the task when --wait is set:\n%s", out)
+	}
+}
+
+func TestVMStartWaitJSON(t *testing.T) {
+	server := newActionServer(t)
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	out, err := runVM(t, "vm", "start", "550e8400-e29b-41d4-a716-446655440001", "--wait", "--output", "json")
+	if err != nil {
+		t.Fatalf("vm start --wait --output json: %v", err)
+	}
+	var task map[string]any
+	if err := json.Unmarshal([]byte(out), &task); err != nil {
+		t.Fatalf("wait JSON output is not valid JSON: %v\n%s", err, out)
+	}
+	if task["id"] != "task-123" || task["status"] != "success" {
+		t.Fatalf("unexpected task payload: %s", out)
+	}
+}
+
+// A server whose action succeeds but whose task ends in failure: --wait must
+// still render the completed task and exit non-zero with the task message.
+func TestVMStartWaitFailure(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/rest/v0/vms/"):
+			_, _ = fmt.Fprint(w, fixtureVM)
+		case r.Method == http.MethodGet && strings.Contains(r.URL.Path, "/rest/v0/tasks/"):
+			_, _ = fmt.Fprint(w, `{"id":"task-123","status":"failure","start":1700000000000,"end":1700000001000,"result":{"message":"disk full"}}`)
+		case r.Method == http.MethodPost:
+			_, _ = fmt.Fprint(w, `{"taskId":"task-123"}`)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+	isolateVM(t, server.URL)
+
+	out, err := runVM(t, "vm", "start", "550e8400-e29b-41d4-a716-446655440001", "--wait")
+	if err == nil {
+		t.Fatal("expected a non-zero exit when the waited task fails")
+	}
+	if !strings.Contains(err.Error(), "task task-123 failed: disk full") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !strings.Contains(out, "failure") {
+		t.Fatalf("the completed task must still be rendered:\n%s", out)
 	}
 }

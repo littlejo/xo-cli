@@ -74,7 +74,7 @@ func fakeXO(t *testing.T, handler func(w http.ResponseWriter, r *http.Request)) 
 func isolatePointers(t *testing.T, url string) {
 	t.Helper()
 	t.Setenv("XOA_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE", "XOA_YES"} {
+	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE", "XOA_YES", "XOA_WAIT"} {
 		t.Setenv(key, "")
 	}
 	t.Setenv("XOA_ENDPOINT", url)

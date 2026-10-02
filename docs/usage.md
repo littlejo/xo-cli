@@ -111,13 +111,18 @@ time:
 | `XOA_INSECURE`    | Skip TLS certificate verification             |
 | `XOA_TIMEOUT`     | HTTP client timeout, e.g. `60s` or `2m` (like `--timeout`) |
 | `XOA_YES`         | Skip confirmation prompts (like `--yes`)      |
+| `XOA_WAIT`        | Wait for async action tasks to complete (like `--wait`) |
 | `XOA_DEBUG`       | Show SDK/API error details (like `--debug`)   |
 | `XOA_CONFIG_FILE` | Location of the configuration file            |
 
 Either a token, or a username + password, must be available to authenticate.
 
 `XOA_YES` is meant for scripts and CI: `XOA_YES=1 xo vm stop <id>` behaves like
-`xo vm stop <id> --yes` without having to pass the flag everywhere.
+`xo vm stop <id> --yes` without having to pass the flag everywhere. Likewise
+`XOA_WAIT=1` behaves like `--wait` on the asynchronous actions (the `xo vm`,
+`xo vbd`, `xo pbd` and `xo sr` sections below): `XOA_WAIT=1 xo vm start <id>`
+waits for the start task to complete without having to pass the flag on every
+command.
 
 ### Insecure mode
 
@@ -255,6 +260,7 @@ xo vm vdis <id> --query '[].name_label'
 # Lifecycle (async actions return a task id; delete is synchronous)
 xo vm start <id>                    # power on
 xo vm start <id> --host <host-id>   # pin to a host
+xo vm start <id> --wait             # block until the start task completes
 xo vm stop <id>                     # clean shutdown (asks to confirm)
 xo vm stop <id> --hard              # power off immediately
 xo vm stop <id> --yes               # skip confirmation (automation)
@@ -273,6 +279,13 @@ xo vm delete <id> --yes             # skip confirmation (automation)
 ```
 
 `--memory` accepts bytes or human-readable sizes (`2G`, `512M`).
+
+The lifecycle actions (`start`, `stop`, `reboot`, `pause`, `unpause`,
+`suspend`, `resume`, `snapshot`) are asynchronous: they return a task id. Add
+`--wait` (or set `XOA_WAIT=1`) to block until the task reaches a terminal
+state instead; the completed task is then printed (like `xo task wait`) and
+the exit status reflects the outcome (non-zero if the task fails or is
+interrupted).
 
 Destructive operations (`stop`, `delete`) require confirmation; pass `--yes`
 (or set `XOA_YES`) to run non-interactively. Without either, a non-terminal
@@ -310,8 +323,10 @@ xo sr list
 xo sr list --type lvm               # filter by SR type (see note below)
 xo sr list --query '[?SR_type==`nfs`].name_label'
 xo sr get <id>
-xo sr scan <id>                     # rescan the SR for disk changes
-xo sr reclaim-space <id>            # reclaim unused (thin) space
+xo sr scan <id>                     # rescan the SR for disk changes (async)
+xo sr scan <id> --wait              # …and wait for the scan to finish
+xo sr reclaim-space <id>            # reclaim unused (thin) space (async)
+xo sr reclaim-space <id> --wait
 
 # Tags
 xo sr tag add <id> production
@@ -445,15 +460,18 @@ xo vbd create --vm <vm-id> --vdi <vdi-id> --mode RO --bootable
 xo vbd delete <id>              # detach (keeps the VDI); confirm + --yes
 xo vbd delete <id> --yes
 
-# Hot-plug / hot-unplug (running VM)
+# Hot-plug / hot-unplug (running VM; async, --wait to block)
 xo vbd connect <id>
+xo vbd connect <id> --wait
 xo vbd disconnect <id>
+xo vbd disconnect <id> --wait
 ```
 
 `create` links a VDI to a VM; it does not hot-plug. If the VM is running, run
 `connect` afterwards so the guest sees the disk without a reboot. `delete`
 removes only the attachment — the VDI (and its data) is kept; use
-`xo vdi delete` to remove the disk itself.
+`xo vdi delete` to remove the disk itself. `connect` / `disconnect` are
+asynchronous (they print a task id); `--wait` blocks until the task completes.
 
 ### `xo pbd`
 
@@ -465,14 +483,17 @@ xo pbd list
 xo pbd list --query '[].attached'
 xo pbd get <id>                 # one PBD (table/json/yaml)
 
-# Connect / disconnect the SR to its host (async: prints a task id)
+# Connect / disconnect the SR to its host (async: prints a task id; --wait to block)
 xo pbd plug <id>
+xo pbd plug <id> --wait
 xo pbd unplug <id>
+xo pbd unplug <id> --wait
 ```
 
 `plug` / `unplug` are asynchronous: they print the task id and return. Track
-them with `xo task get <task-id>` or `xo task wait <task-id>`. A PBD's
-`attached` column reflects whether the SR is currently connected.
+them with `xo task get <task-id>` or `xo task wait <task-id>`, or add `--wait`
+to block until the task completes. A PBD's `attached` column reflects whether
+the SR is currently connected.
 
 ### `xo task`
 

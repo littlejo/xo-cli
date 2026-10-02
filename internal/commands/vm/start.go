@@ -48,5 +48,6 @@ Examples:
 	}
 
 	cmd.Flags().StringVar(&hostID, flagHost, "", "host UUID to start the VM on (default: automatic)")
+	addWaitFlag(cmd)
 	return cmd
 }

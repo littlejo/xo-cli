@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/littlejo/xo-gocli/internal/cli"
+	"github.com/littlejo/xo-gocli/internal/taskwait"
 )
 
 const fixtureTaskPending = `{
@@ -98,9 +99,9 @@ func runWaitCmd(t *testing.T, args ...string) (stdout, stderr string, err error)
 // the tests do not sleep for real. It restores the original value afterwards.
 func shortenPoll(t *testing.T, d time.Duration) {
 	t.Helper()
-	old := pollInterval
-	pollInterval = d
-	t.Cleanup(func() { pollInterval = old })
+	old := taskwait.PollInterval
+	taskwait.PollInterval = d
+	t.Cleanup(func() { taskwait.PollInterval = old })
 }
 
 func TestTaskWaitSuccess(t *testing.T) {

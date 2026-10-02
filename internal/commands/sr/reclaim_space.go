@@ -36,5 +36,6 @@ Examples:
 			})
 		},
 	}
+	addWaitFlag(cmd)
 	return cmd
 }
