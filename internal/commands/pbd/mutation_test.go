@@ -125,7 +125,7 @@ func readBody(r *http.Request) (string, error) {
 func isolatePointers(t *testing.T, url string) {
 	t.Helper()
 	t.Setenv("XOA_CONFIG_FILE", t.TempDir()+"/config")
-	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE", "XOA_YES"} {
+	for _, key := range []string{"XOA_PROFILE", "XOA_ENDPOINT", "XOA_TOKEN", "XOA_USERNAME", "XOA_PASSWORD", "XOA_INSECURE", "XOA_YES", "XOA_WAIT"} {
 		t.Setenv(key, "")
 	}
 	t.Setenv("XOA_ENDPOINT", url)
@@ -332,5 +332,27 @@ func TestPBDPlugNotFound(t *testing.T) {
 	}
 	if _, ok := server.requestByPathPrefix("/actions/plug"); ok {
 		t.Fatal("plug must not be sent for a missing PBD")
+	}
+}
+
+// --- --wait ------------------------------------------------------------------
+
+func TestPBDPlugWait(t *testing.T) {
+	server := newMutationServer(t)
+	defer server.Close()
+	isolatePointers(t, server.URL)
+
+	out, err := runPBD(t, "pbd", "plug", getPBDID, "--wait")
+	if err != nil {
+		t.Fatalf("pbd plug --wait: %v", err)
+	}
+	// The completed task is rendered instead of the "Requested plug" line.
+	for _, expected := range []string{"ID", "STATUS", pbdTask, "success"} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("wait output missing %q:\n%s", expected, out)
+		}
+	}
+	if strings.Contains(out, "Requested plug") {
+		t.Fatalf("the plain action line must be replaced by the task when --wait is set:\n%s", out)
 	}
 }

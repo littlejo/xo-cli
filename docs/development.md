@@ -297,6 +297,7 @@ v1.19.0 version number is the *module* version, not the REST API version
 - `xo configure` + named profiles (with environment overrides)
 - `list` / `get` for `vm`, `host`, `pool`, `sr`, `network`, `task`, `template`, `token`
 - `task wait` (blocks until a task reaches a terminal state; exit status reflects the outcome)
+- `--wait` on the asynchronous actions (`vm start/stop/reboot/pause/unpause/suspend/resume/snapshot`, `vbd connect/disconnect`, `pbd plug/unplug`, `sr scan/reclaim-space`; plus `$XOA_WAIT` for scripts): blocks until the action's task completes, then renders it (shared `internal/taskwait` package, reused by `task wait`)
 - `vm vdis` (per-VM VDI listing)
 - `sr scan` / `sr reclaim-space` (SR maintenance actions)
 - VM lifecycle: `create`, `start` (host pinning), `stop` (clean/hard), `reboot` (clean/hard), `pause`/`unpause`, `suspend`/`resume`, `snapshot`, `delete`, `export`/`import` (XVA/OVA), `update`, `tag add/remove`
@@ -323,7 +324,6 @@ commands. No SDK work is required.
 | Command | SDK surface (verified in `v1.19.0`) |
 | ------- | ----------------------------------- |
 | `xo task abort <id>` | `Task().Abort` |
-| `--wait` on async actions (`vm start`, …) | `Task().HandleTaskResponse(ctx, resp, true)` |
 
 Each item added here reduces the need for `xo rest`.
 

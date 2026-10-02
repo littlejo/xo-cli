@@ -45,5 +45,6 @@ Examples:
 	}
 
 	cmd.Flags().BoolVar(&hard, flagHard, false, "force a hard reboot instead of a clean one")
+	addWaitFlag(cmd)
 	return cmd
 }

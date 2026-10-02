@@ -56,5 +56,6 @@ Examples:
 	// --yes (or $XOA_YES) skips the confirmation; it is read via
 	// cli.SkipConfirm, which sees both the flag and the environment variable.
 	cmd.Flags().Bool(flagYes, false, "do not ask for confirmation (or set XOA_YES=1)")
+	addWaitFlag(cmd)
 	return cmd
 }

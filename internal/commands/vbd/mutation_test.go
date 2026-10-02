@@ -369,3 +369,25 @@ func TestVBDConnectNotFound(t *testing.T) {
 		t.Fatal("connect must not be sent for a missing VBD")
 	}
 }
+
+// --- --wait ------------------------------------------------------------------
+
+func TestVBDConnectWait(t *testing.T) {
+	server := newMutationServer(t)
+	defer server.Close()
+	isolatePointers(t, server.URL)
+
+	out, err := runVBD(t, "vbd", "connect", getVBDID, "--wait")
+	if err != nil {
+		t.Fatalf("vbd connect --wait: %v", err)
+	}
+	// The completed task is rendered instead of the "Requested connect" line.
+	for _, expected := range []string{"ID", "STATUS", "task-123", "success"} {
+		if !strings.Contains(out, expected) {
+			t.Errorf("wait output missing %q:\n%s", expected, out)
+		}
+	}
+	if strings.Contains(out, "Requested connect") {
+		t.Fatalf("the plain action line must be replaced by the task when --wait is set:\n%s", out)
+	}
+}

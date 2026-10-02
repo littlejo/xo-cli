@@ -33,6 +33,9 @@ const (
 	// EnvTimeout is the script counterpart of --timeout (a Go duration like
 	// "60s" or "2m").
 	EnvTimeout = "XOA_TIMEOUT"
+	// EnvWait is the script counterpart of the --wait flag of the
+	// asynchronous actions (a "1", "true" or "yes" value).
+	EnvWait = "XOA_WAIT"
 )
 
 // defaultClientTimeout is the HTTP client timeout when neither --timeout nor
@@ -170,6 +173,21 @@ func SkipConfirm(cmd *cobra.Command) bool {
 		return true
 	}
 	if v := os.Getenv("XOA_YES"); v != "" {
+		return v == "1" || strings.EqualFold(v, "true") || strings.EqualFold(v, "yes")
+	}
+	return false
+}
+
+// WaitEnabled reports whether an asynchronous action should wait for its task
+// to complete: either the --wait flag or the $XOA_WAIT environment variable.
+// The variable exists so scripts and CI pipelines can wait without repeating
+// --wait on every command (e.g. `XOA_WAIT=1 xo vm start <id>`); it only
+// affects the --wait flag, not the wait deadline of 'xo task wait'.
+func WaitEnabled(cmd *cobra.Command) bool {
+	if wait, _ := cmd.Flags().GetBool("wait"); wait {
+		return true
+	}
+	if v := os.Getenv(EnvWait); v != "" {
 		return v == "1" || strings.EqualFold(v, "true") || strings.EqualFold(v, "yes")
 	}
 	return false

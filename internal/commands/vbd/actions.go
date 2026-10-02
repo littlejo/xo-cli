@@ -10,8 +10,20 @@ import (
 	"github.com/vatesfr/xenorchestra-go-sdk/pkg/services/library"
 
 	"github.com/littlejo/xo-gocli/internal/cli"
+	"github.com/littlejo/xo-gocli/internal/config"
 	"github.com/littlejo/xo-gocli/internal/output"
+	"github.com/littlejo/xo-gocli/internal/taskwait"
 )
+
+// flagWait makes an asynchronous action block until its task completes and
+// render the task, instead of returning right after the action is started.
+const flagWait = "wait"
+
+// addWaitFlag registers the --wait flag on an asynchronous action. The
+// $XOA_WAIT environment variable is an equivalent for scripts (cli.WaitEnabled).
+func addWaitFlag(cmd *cobra.Command) {
+	cmd.Flags().Bool(flagWait, false, "wait for the task to complete before returning, and print it (like 'xo task wait'; or set XOA_WAIT=1)")
+}
 
 func newConnectCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -32,6 +44,7 @@ Examples:
 			})
 		},
 	}
+	addWaitFlag(cmd)
 	return cmd
 }
 
@@ -54,6 +67,7 @@ Examples:
 			})
 		},
 	}
+	addWaitFlag(cmd)
 	return cmd
 }
 
@@ -83,7 +97,36 @@ func runAction(cmd *cobra.Command, idStr string, verb string, perform func(ctx c
 		return cli.InsecureHint(fmt.Sprintf("cannot %s VBD %s: %v", verb, label, err), cfg.Insecure)
 	}
 
+	if cli.WaitEnabled(cmd) && taskID != "" {
+		return waitOnTask(cmd, cfg, ctx, taskID)
+	}
+
 	return renderActionResult(cmd, verb, label, taskID)
+}
+
+// waitOnTask blocks until the action's task reaches a terminal state and
+// renders the completed task (like 'xo task wait'); the returned error
+// reflects the outcome so the exit status does too. Each poll is bounded by
+// the HTTP client timeout (--timeout / $XOA_TIMEOUT); the wait itself ends on
+// a terminal state or Ctrl+C.
+func waitOnTask(cmd *cobra.Command, cfg *config.ClientConfig, ctx context.Context, taskID string) error {
+	format, err := output.ParseFormat(cli.OutputFormat(cmd))
+	if err != nil {
+		return err
+	}
+	httpClient, err := cli.NewHTTPClient(cmd, cfg)
+	if err != nil {
+		return err
+	}
+	return taskwait.Wait(ctx, httpClient, taskwait.Options{
+		Out:    cmd.OutOrStdout(),
+		Stderr: cmd.ErrOrStderr(),
+		ID:     taskID,
+		Format: format,
+		NotFound: func(id string, err error) error {
+			return cli.NotFound("task", "get", id, err, cfg.Insecure)
+		},
+	})
 }
 
 // renderActionResult prints the outcome of an async VBD action: a friendly
